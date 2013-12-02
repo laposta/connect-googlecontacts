@@ -1,0 +1,22 @@
+{
+    "name"         : "laposta/googleposta",
+    "description"  : "A google contacts - laposta api bridge",
+    "license"      : "MIT",
+    "authors"      : [
+        {
+            "name"  : "Merten van Gerven",
+            "email" : "merten@codeblanche.com"
+        }
+    ],
+    "repositories" : [
+        {
+            "type" : "vcs",
+            "url"  : "git@github.com:CodeBlanche/laposta-api-php.git"
+        }
+    ],
+    "require"      : {
+        "laposta/laposta-api-php" : "dev-master",
+        "codeblanche/depend"      : "dev-master",
+        "codeblanche/web"         : "dev-master"
+    }
+}
