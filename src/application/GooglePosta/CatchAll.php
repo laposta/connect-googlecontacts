@@ -13,6 +13,6 @@ class CatchAll extends Controller
      */
     public function run($params = array())
     {
-        $this->err404();
+        $this->error(404);
     }
 }

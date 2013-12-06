@@ -3,7 +3,6 @@
 namespace GooglePosta;
 
 use GooglePosta\MVC\Controller;
-use Web\Route\Router;
 
 class Main extends Controller
 {
@@ -12,10 +11,7 @@ class Main extends Controller
      */
     protected function defineRoutes()
     {
-        $this->router->setRouteType(Router::ROUTE_TYPE_DOMAIN);
-        $this->router->define('my.', 'Totally200\Admin\Main');
-        $this->router->define('get.totally200.', 'Totally200\Subscribe\Main');
-        $this->router->catchall('Totally200\Website\Main');
+        $this->router->catchall('GooglePosta\CatchAll');
     }
 
     /**
@@ -26,6 +22,6 @@ class Main extends Controller
     public function run($params = array())
     {
         $this->defineRoutes();
-        $this->route($this->request->domain());
+        $this->route($this->request->uri());
     }
 }

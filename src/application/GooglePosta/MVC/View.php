@@ -2,9 +2,6 @@
 
 namespace GooglePosta\MVC;
 
-use Template\Layout;
-use Template\Page;
-
 /**
  * Class View
  *
@@ -13,43 +10,24 @@ use Template\Page;
 class View extends \MVC\View
 {
     /**
-     * @var Page
+     * @var mixed
      */
-    protected $page;
+    protected $content;
 
     /**
-     * @var Layout
+     * @param mixed $value
      */
-    protected $layout;
-
-    /**
-     * @param Page     $page
-     * @param Layout   $layout
-     */
-    function __construct(Page $page, Layout $layout)
+    public function setContent($value)
     {
-        $this->page   = $page;
-        $this->layout = $layout;
-
-        $this->page->setLayout($this->layout);
+        $this->content = $value;
     }
 
     /**
-     * @param string $filePath
+     * @return mixed
      */
-    public function setPage($filePath)
+    public function getContent()
     {
-        $this->page->setTemplate($filePath);
-    }
-
-    /**
-     * @param string $filePath
-     */
-    public function setLayout($filePath)
-    {
-        $this->layout->setTemplate($filePath);
-
-        $this->page->setUseLayout(true);
+        return $this->content;
     }
 
     /**
@@ -57,6 +35,6 @@ class View extends \MVC\View
      */
     public function toString()
     {
-        return $this->page->toString();
+        return (string) $this->content;
     }
 }

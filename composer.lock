@@ -3,20 +3,20 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "bd628407903d1172203fa74e2163e245",
+    "hash": "48e89ecc90562e03f43561aab5e6f404",
     "packages": [
         {
             "name": "codeblanche/depend",
-            "version": "dev-master",
+            "version": "1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Depend.git",
-                "reference": "a691b92398aa232099d748e5406d26e717314259"
+                "reference": "6ec8d6282e6d5b577d806dd384008e90ff1a1c36"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/a691b92398aa232099d748e5406d26e717314259",
-                "reference": "a691b92398aa232099d748e5406d26e717314259",
+                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/6ec8d6282e6d5b577d806dd384008e90ff1a1c36",
+                "reference": "6ec8d6282e6d5b577d806dd384008e90ff1a1c36",
                 "shasum": ""
             },
             "require": {
@@ -49,11 +49,11 @@
                 "injection",
                 "php"
             ],
-            "time": "2013-07-18 08:32:06"
+            "time": "2013-12-06 12:49:00"
         },
         {
             "name": "codeblanche/web",
-            "version": "dev-master",
+            "version": "1.3.6a",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Web.git",
@@ -102,16 +102,16 @@
         },
         {
             "name": "laposta/laposta-api-php",
-            "version": "dev-master",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/laposta-api-php.git",
-                "reference": "2b3c912f9cb037cb9a1f58311b91dad382701f21"
+                "reference": "18c943048bce07c2b23497fee1236f312581dd5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/laposta-api-php/zipball/2b3c912f9cb037cb9a1f58311b91dad382701f21",
-                "reference": "2b3c912f9cb037cb9a1f58311b91dad382701f21",
+                "url": "https://api.github.com/repos/CodeBlanche/laposta-api-php/zipball/18c943048bce07c2b23497fee1236f312581dd5c",
+                "reference": "18c943048bce07c2b23497fee1236f312581dd5c",
                 "shasum": ""
             },
             "require": {
@@ -120,6 +120,7 @@
                 "php": ">=5.2"
             },
             "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -130,11 +131,7 @@
                 }
             ],
             "description": "PHP Laposta API wrapper",
-            "support": {
-                "source": "https://github.com/CodeBlanche/laposta-api-php/tree/1.2.0",
-                "issues": "https://github.com/CodeBlanche/laposta-api-php/issues"
-            },
-            "time": "2013-12-02 20:57:26"
+            "time": "2013-12-06 11:19:20"
         }
     ],
     "packages-dev": [
@@ -145,9 +142,7 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "laposta/laposta-api-php": 20,
-        "codeblanche/depend": 20,
-        "codeblanche/web": 20
+        "codeblanche/web": 15
     },
     "platform": [
 

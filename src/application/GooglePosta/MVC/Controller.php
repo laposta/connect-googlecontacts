@@ -35,16 +35,6 @@ abstract class Controller extends \MVC\Controller
     protected $view;
 
     /**
-     * @var string
-     */
-    protected $layoutRoot = '_default/html/layout';
-
-    /**
-     * @var string
-     */
-    protected $pageRoot = '_default/html/page';
-
-    /**
      * @param Web      $web
      * @param Model    $model
      * @param View     $view
@@ -74,73 +64,36 @@ abstract class Controller extends \MVC\Controller
     }
 
     /**
-     * @param string $relativePath
-     *
-     * @return string
-     */
-    protected function resolveLayout($relativePath)
-    {
-        return $this->resolveDocument($relativePath, $this->layoutRoot);
-    }
-
-    /**
-     * @param string $relativePath
-     *
-     * @return string
-     */
-    protected function resolvePage($relativePath)
-    {
-        return $this->resolveDocument($relativePath, $this->pageRoot);
-    }
-
-    /**
-     * @param string $relativePath
-     * @param string $relativeRoot
-     *
-     * @return string
-     */
-    protected function resolveDocument($relativePath, $relativeRoot)
-    {
-        return $this->path->document(trim($relativeRoot, '/') . '/' . ltrim($relativePath, '/'));
-    }
-
-    /**
      * @param int             $errCode
      * @param \Exception|null $exception
      */
     protected function error($errCode, $exception = null)
     {
-        $this->respond("/error/{$errCode}.phtml", null, $errCode);
-    }
-
-    /**
-     * Respond with a 404 page not found error
-     */
-    protected function err404()
-    {
-        $this->error(404);
-    }
-
-    /**
-     * Send the 200 response with the specified page and layout
-     *
-     * @param string $page   Page path relative to pageRoot
-     * @param string $layout Layout path relative to layoutRoot [optional: default: '/default.phtml']
-     * @param int    $statusCode
-     */
-    protected function respond($page, $layout = null, $statusCode = null)
-    {
-        if (is_null($layout)) {
-            $layout = '/default.phtml';
+        if ($exception instanceof \Exception) {
+            $this->view->setContent($exception->getMessage() . "\n");
         }
 
+        $this->respond($errCode);
+    }
+
+    /**
+     * Send the response with output from the view
+     *
+     * @param int $statusCode
+     */
+    protected function respond($statusCode = null)
+    {
         if (is_null($statusCode)) {
             $statusCode = Status::OK;
         }
 
-        $this->view->setLayout($this->resolveLayout($layout));
-        $this->view->setPage($this->resolvePage($page));
+        $status  = new Status($statusCode);
+        $content = $this->view->toString();
 
-        $this->response->respond(new Status($statusCode), $this->view->toString());
+        if (empty($content)) {
+            $content = $status->getStatusText();
+        }
+
+        $this->response->respond($status, $content);
     }
 }

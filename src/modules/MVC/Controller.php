@@ -60,4 +60,17 @@ abstract class Controller
      * @param array $params
      */
     abstract public function run($params = array());
+
+    /**
+     * Handle an error
+     *
+     * @param \Exception $e
+     */
+    public function err(\Exception $e)
+    {
+        echo "<pre>";
+        echo $e->getMessage()."\n";
+        echo $e->getTraceAsString();
+        echo "</pre>";
+    }
 }

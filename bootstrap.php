@@ -2,7 +2,14 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-$bs = new Bootstrap(new \Depend\Manager(), __DIR__, 'GooglePosta\Main');
+try {
+    $bs = new Bootstrap(new \Depend\Manager(), __DIR__, 'GooglePosta\Main');
+    $bs->loadGlobals(__DIR__ . '/src/global');
+    $bs->boot();
+}
+catch (\Exception $e) {
+    header('Status: 500 Internal Server Error');
 
-$bs->loadGlobals(__DIR__ . '/src/global');
-$bs->boot();
+    echo $e->getMessage() . "\n";
+    echo $e->getTraceAsString() . "\n";
+}

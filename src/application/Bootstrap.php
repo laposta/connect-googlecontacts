@@ -1,5 +1,7 @@
 <?php
 
+use Config\Config;
+
 class Bootstrap
 {
     /**
@@ -16,6 +18,11 @@ class Bootstrap
      * @var string
      */
     protected $appController;
+
+    /**
+     * @var Config
+     */
+    protected $config;
 
     /**
      * @param \Depend\Manager $dm
@@ -40,7 +47,8 @@ class Bootstrap
      */
     public function boot()
     {
-        $this->init();
+        $this->initEnvironment();
+        $this->initDependencies();
 
         $main = $this->dm->get($this->appController);
 
@@ -48,7 +56,12 @@ class Bootstrap
             throw new RuntimeException('Bootstrap is unable to load the given application controller');
         }
 
-        $main->run();
+        try {
+            $main->run();
+        }
+        catch (\Exception $e) {
+            $main->err($e);
+        }
     }
 
     /**
@@ -86,12 +99,16 @@ class Bootstrap
     }
 
     /**
-     * Get the configuration object
+     * Get the configuration
      *
-     * @return Config\Config
+     * @return Config
      */
     protected function getConfig()
     {
+        if ($this->config instanceof Config) {
+            return $this->config;
+        }
+
         /** @noinspection PhpIncludeInspection */
 
         $this->dm->describe(
@@ -102,36 +119,20 @@ class Bootstrap
             )
         );
 
-        return $this->dm->get('Config\Config');
+        return $this->config = $this->dm->get('Config\Config');
     }
 
     /**
      * Initialize the dependency manager descriptors
      */
-    protected function init()
+    protected function initDependencies()
     {
         $config = $this->getConfig();
+
 
         $this->dm->implement(
             'Web\Route\Abstraction\DependencyContainerInterface',
             'Web\Route\DependManagerProxy'
-        );
-
-        $this->dm->implement(
-            'Template\Abstraction\ElementFactoryInterface',
-            'Template\ElementFactory'
-        );
-
-        $this->dm->describe('Template\Node\Collection\NodeList')->setIsShared(false);
-        $this->dm->describe('Template\Node\Collection\AttributeList')->setIsShared(false);
-
-        $this->dm->describe(
-            'PDO',
-            array(
-                $config->get('database.dsn'),
-                $config->get('database.username'),
-                $config->get('database.password'),
-            )
         );
 
         $this->dm->describe(
@@ -143,9 +144,15 @@ class Bootstrap
                 '/tmp',
             )
         );
+    }
 
-        if ($config->get('environment') === 'development') {
-            $this->dm->describe('Template\IncludeResolver', array(true));
-        }
+    /**
+     * Initialize the applications' environment
+     */
+    protected function initEnvironment()
+    {
+        $config = $this->getConfig();
+
+        date_default_timezone_set($config->get('timezone'));
     }
 }

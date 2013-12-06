@@ -42,5 +42,4 @@ abstract class View
         return $this->model;
     }
 
-
 }
