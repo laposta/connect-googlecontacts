@@ -1,8 +1,8 @@
 <?php
 
-namespace GooglePosta;
+namespace GooglePosta\MVC;
 
-use GooglePosta\MVC\Controller;
+use GooglePosta\MVC\Base\Controller;
 
 class CatchAll extends Controller
 {

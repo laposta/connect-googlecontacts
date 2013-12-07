@@ -1,6 +1,6 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace GooglePosta\MVC\Base;
 
 /**
  * Class View

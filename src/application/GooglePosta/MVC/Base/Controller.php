@@ -1,7 +1,8 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace GooglePosta\MVC\Base;
 
+use Command\CommandFactory;
 use Config\Config;
 use Path\Resolver;
 use Web\Response\Status;
@@ -35,18 +36,31 @@ abstract class Controller extends \MVC\Controller
     protected $view;
 
     /**
-     * @param Web      $web
-     * @param Model    $model
-     * @param View     $view
-     * @param Config   $config
-     * @param Resolver $pathResolver
+     * @var CommandFactory
      */
-    function __construct(Web $web, Model $model, View $view, Config $config, Resolver $pathResolver)
-    {
+    protected $commandFactory;
+
+    /**
+     * @param Web            $web
+     * @param Model          $model
+     * @param View           $view
+     * @param Config         $config
+     * @param Resolver       $pathResolver
+     * @param CommandFactory $commandFactory
+     */
+    function __construct(
+        Web $web,
+        Model $model,
+        View $view,
+        Config $config,
+        Resolver $pathResolver,
+        CommandFactory $commandFactory
+    ) {
         parent::__construct($web, $model, $view);
 
-        $this->config = $config;
-        $this->path   = $pathResolver;
+        $this->config         = $config;
+        $this->path           = $pathResolver;
+        $this->commandFactory = $commandFactory;
     }
 
     /**

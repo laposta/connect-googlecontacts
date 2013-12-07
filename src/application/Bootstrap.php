@@ -144,6 +144,13 @@ class Bootstrap
                 '/tmp',
             )
         );
+
+        $this->dm->describe(
+            'Security\Cryptograph',
+            array(
+                $config->get('security.encryption_key')
+            )
+        );
     }
 
     /**

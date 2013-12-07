@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "48e89ecc90562e03f43561aab5e6f404",
+    "hash": "dcf1aadbe599b9e441ef6d0d6bd68754",
     "packages": [
         {
             "name": "codeblanche/depend",
@@ -101,6 +101,43 @@
             "time": "2013-11-03 21:39:59"
         },
         {
+            "name": "google/apiclient",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/google/google-api-php-client.git",
+                "reference": "a583c86e4bcffeacb8228b780d61e658dd2ae70b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/a583c86e4bcffeacb8228b780d61e658dd2ae70b",
+                "reference": "a583c86e4bcffeacb8228b780d61e658dd2ae70b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Google": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                "src/"
+            ],
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Client library for Google APIs",
+            "homepage": "http://developers.google.com/api-client-library/php",
+            "keywords": [
+                "google"
+            ],
+            "time": "2013-12-07 04:12:15"
+        },
+        {
             "name": "laposta/laposta-api-php",
             "version": "1.2.1",
             "source": {
@@ -142,11 +179,12 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "codeblanche/web": 15
+        "codeblanche/web": 15,
+        "google/apiclient": 20
     },
-    "platform": [
-
-    ],
+    "platform": {
+        "ext-curl": "*"
+    },
     "platform-dev": [
 
     ]

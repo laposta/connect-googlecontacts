@@ -124,6 +124,10 @@ class Cryptograph implements CryptographInterface
      */
     public function encode($string)
     {
+        if (empty($string)) {
+            return '';
+        }
+
         $this->open();
 
         $iv      = $this->init();
@@ -143,6 +147,10 @@ class Cryptograph implements CryptographInterface
      */
     public function decode($string)
     {
+        if (empty($string)) {
+            return '';
+        }
+
         $this->open();
 
         $this->init(substr($string, 0, $this->ivSize));
