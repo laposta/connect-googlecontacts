@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "dcf1aadbe599b9e441ef6d0d6bd68754",
+    "hash": "8abce3597f65d1bed61aeea7c76eb593",
     "packages": [
         {
             "name": "codeblanche/depend",
@@ -53,16 +53,16 @@
         },
         {
             "name": "codeblanche/web",
-            "version": "1.3.6a",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Web.git",
-                "reference": "c53b1f073fa19ccc5c78288f9fa468face9c235c"
+                "reference": "66baaa0c3ed20dc26dcfc8bb09763af55f8f243b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Web/zipball/c53b1f073fa19ccc5c78288f9fa468face9c235c",
-                "reference": "c53b1f073fa19ccc5c78288f9fa468face9c235c",
+                "url": "https://api.github.com/repos/CodeBlanche/Web/zipball/66baaa0c3ed20dc26dcfc8bb09763af55f8f243b",
+                "reference": "66baaa0c3ed20dc26dcfc8bb09763af55f8f243b",
                 "shasum": ""
             },
             "require": {
@@ -98,7 +98,7 @@
                 "router",
                 "web"
             ],
-            "time": "2013-11-03 21:39:59"
+            "time": "2013-12-08 15:39:51"
         },
         {
             "name": "google/apiclient",
@@ -179,12 +179,12 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "codeblanche/web": 15,
+        "codeblanche/web": 20,
         "google/apiclient": 20
     },
-    "platform": {
-        "ext-curl": "*"
-    },
+    "platform": [
+
+    ],
     "platform-dev": [
 
     ]

@@ -64,7 +64,7 @@ class StoreClientData implements CommandInterface
     /**
      * @param string $clientToken
      *
-     * @return LoadClientData
+     * @return StoreClientData
      */
     public function setClientToken($clientToken)
     {

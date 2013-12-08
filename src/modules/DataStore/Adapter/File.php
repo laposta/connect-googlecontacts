@@ -28,7 +28,7 @@ class File implements AdapterInterface
      */
     public function persist($data)
     {
-        file_put_contents($this->path, "<?php \n\n return " . var_export($data, true) . ";\n");
+        file_put_contents($this->path, "<?php\n\nreturn " . var_export($data, true) . ";\n");
 
         return $this;
     }

@@ -6,7 +6,7 @@ use Command\Abstraction\CommandInterface;
 use Config\Config;
 use GooglePosta\Entity\ClientData;
 
-class InitializeApiBridge implements CommandInterface
+class ConfirmApiBridge implements CommandInterface
 {
     /**
      * @var Config
@@ -21,7 +21,7 @@ class InitializeApiBridge implements CommandInterface
     /**
      * @var string
      */
-    private $redirectUrl;
+    private $authCode;
 
     /**
      * @param Config $config
@@ -34,7 +34,7 @@ class InitializeApiBridge implements CommandInterface
     /**
      * @param \GooglePosta\Entity\ClientData $clientData
      *
-     * @return InitializeApiBridge
+     * @return ConfirmApiBridge
      */
     public function setClientData($clientData)
     {
@@ -52,17 +52,23 @@ class InitializeApiBridge implements CommandInterface
     }
 
     /**
-     * @return string
+     * @param string $authCode
+     *
+     * @return ConfirmApiBridge
      */
-    public function getRedirectUrl()
+    public function setAuthCode($authCode)
     {
-        return $this->redirectUrl;
+        $this->authCode = $authCode;
+
+        return $this;
     }
 
     /**
      * Execute the command
      *
      * @return CommandInterface
+     *
+     * @throws \RuntimeException
      */
     public function execute()
     {
@@ -70,15 +76,22 @@ class InitializeApiBridge implements CommandInterface
         $client->setClientId($this->config->get('google.client_id'));
         $client->setClientSecret($this->config->get('google.client_secret'));
         $client->setRedirectUri($this->config->get('google.return_url'));
-        $client->setAccessType('offline');
-        $client->setApprovalPrompt('force');
 
-        $client->setScopes(
-            array(
-                'https://www.google.com/m8/feeds',
-            )
+        $tokens = json_decode(
+            $client->authenticate($this->authCode),
+            true
         );
 
-        $this->redirectUrl = $client->createAuthUrl();
+        if (!isset($tokens['access_token'])) {
+            throw new \RuntimeException('Unable to confirm link to google contacts. Please try again.');
+        }
+
+        $this->clientData->setGoogleAccessToken(filter_var($tokens['access_token'], FILTER_SANITIZE_STRING));
+
+        if (!isset($tokens['refresh_token'])) {
+            return;
+        }
+
+        $this->clientData->setGoogleRefreshToken(filter_var($tokens['refresh_token'], FILTER_SANITIZE_STRING));
     }
 }

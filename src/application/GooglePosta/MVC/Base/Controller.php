@@ -5,6 +5,7 @@ namespace GooglePosta\MVC\Base;
 use Command\CommandFactory;
 use Config\Config;
 use Path\Resolver;
+use Session\Session;
 use Web\Response\Status;
 use Web\Web;
 
@@ -41,12 +42,18 @@ abstract class Controller extends \MVC\Controller
     protected $commandFactory;
 
     /**
-     * @param Web            $web
-     * @param Model          $model
-     * @param View           $view
-     * @param Config         $config
-     * @param Resolver       $pathResolver
-     * @param CommandFactory $commandFactory
+     * @var Session
+     */
+    protected $session;
+
+    /**
+     * @param Web              $web
+     * @param Model            $model
+     * @param View             $view
+     * @param Config           $config
+     * @param Resolver         $pathResolver
+     * @param CommandFactory   $commandFactory
+     * @param Session $session
      */
     function __construct(
         Web $web,
@@ -54,13 +61,15 @@ abstract class Controller extends \MVC\Controller
         View $view,
         Config $config,
         Resolver $pathResolver,
-        CommandFactory $commandFactory
+        CommandFactory $commandFactory,
+        Session $session
     ) {
         parent::__construct($web, $model, $view);
 
         $this->config         = $config;
         $this->path           = $pathResolver;
         $this->commandFactory = $commandFactory;
+        $this->session        = $session;
     }
 
     /**
@@ -105,9 +114,27 @@ abstract class Controller extends \MVC\Controller
         $content = $this->view->toString();
 
         if (empty($content)) {
-            $content = $status->getStatusText();
+            $content = $status->getStatusText() . "\n";
         }
 
         $this->response->respond($status, $content);
+    }
+
+    /**
+     * Handle an error
+     *
+     * @param \Exception $e
+     */
+    public function err(\Exception $e)
+    {
+        echo "<pre>\n";
+
+        echo $e->getMessage() . "\n";
+
+        if ($this->config->get('debug.print_backtrace')) {
+            echo $e->getTraceAsString() . "\n";
+        }
+
+        echo "</pre>\n";
     }
 }

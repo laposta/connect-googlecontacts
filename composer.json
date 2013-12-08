@@ -11,7 +11,7 @@
     "require"     : {
         "laposta/laposta-api-php" : "1.*",
         "codeblanche/depend"      : "1.*",
-        "codeblanche/web"         : "1.3.6a",
+        "codeblanche/web"         : "dev-master",
         "google/apiclient"        : "dev-master"
     },
     "autoload"    : {

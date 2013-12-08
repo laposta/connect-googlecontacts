@@ -17,12 +17,27 @@ class ClientData
     /**
      * @var string
      */
+    protected $returnUrl;
+
+    /**
+     * @var string
+     */
     protected $googleAccessToken;
 
     /**
      * @var string
      */
     protected $googleRefreshToken;
+
+    /**
+     * @var int
+     */
+    protected $lastUpdate;
+
+    /**
+     * @var array
+     */
+    protected $mappings;
 
     /**
      * @param string $email
@@ -102,5 +117,65 @@ class ClientData
     public function getLapostaApiToken()
     {
         return $this->lapostaApiToken;
+    }
+
+    /**
+     * @param string $returnUrl
+     *
+     * @return ClientData
+     */
+    public function setReturnUrl($returnUrl)
+    {
+        $this->returnUrl = $returnUrl;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getReturnUrl()
+    {
+        return $this->returnUrl;
+    }
+
+    /**
+     * @param int $lastUpdate
+     *
+     * @return ClientData
+     */
+    public function setLastUpdate($lastUpdate)
+    {
+        $this->lastUpdate = $lastUpdate;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLastUpdate()
+    {
+        return $this->lastUpdate;
+    }
+
+    /**
+     * @param array $mappings
+     *
+     * @return ClientData
+     */
+    public function setMappings($mappings)
+    {
+        $this->mappings = $mappings;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMappings()
+    {
+        return $this->mappings;
     }
 }

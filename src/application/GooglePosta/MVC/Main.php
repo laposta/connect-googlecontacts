@@ -8,11 +8,15 @@ class Main extends Controller
 {
     /**
      * Setup the routing rules
+     *
+     * @return Main
      */
     protected function defineRoutes()
     {
-        $this->router->define('/authority', 'GooglePosta\MVC\Authority');
-        $this->router->catchall('GooglePosta\CatchAll');
+        $this->router->define('/authority/?output', 'GooglePosta\MVC\Authority');
+        $this->router->catchall('GooglePosta\MVC\CatchAll');
+
+        return $this;
     }
 
     /**
@@ -22,8 +26,6 @@ class Main extends Controller
      */
     public function run($params = array())
     {
-        $this->defineRoutes();
-
-        $this->route($this->request->uri()->getPath());
+        $this->defineRoutes()->route($this->request->uri()->getPath());
     }
 }

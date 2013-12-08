@@ -68,9 +68,8 @@ abstract class Controller
      */
     public function err(\Exception $e)
     {
-        echo "<pre>";
-        echo $e->getMessage()."\n";
-        echo $e->getTraceAsString();
-        echo "</pre>";
+        echo "<pre>\n";
+        echo $e->getMessage() . "\n";
+        echo "</pre>\n";
     }
 }
