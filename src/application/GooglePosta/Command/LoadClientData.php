@@ -92,24 +92,9 @@ class LoadClientData implements CommandInterface
         }
 
         $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
-
-        $data = $this->dataStore->getContent();
-
-        $this->clientData->setEmail($data['email']);
-        $this->clientData->setLapostaApiToken($this->decode($data['lapostaApiToken']));
-        $this->clientData->setGoogleAccessToken($this->decode($data['googleAccessToken']));
-        $this->clientData->setGoogleRefreshToken($this->decode($data['googleRefreshToken']));
+        $this->clientData->fromArray($this->dataStore->getContent());
+        $this->clientData->decode($this->crypto, array('mappings', 'returnUrl', 'lastUpdate'));
 
         return $this;
-    }
-
-    /**
-     * @param string $value
-     *
-     * @return string
-     */
-    protected function decode($value)
-    {
-        return $this->crypto->decode(base64_decode($value));
     }
 }

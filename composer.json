@@ -11,6 +11,7 @@
     "require"     : {
         "laposta/laposta-api-php" : "1.*",
         "codeblanche/depend"      : "1.*",
+        "codeblanche/entity"      : "1.*",
         "codeblanche/web"         : "dev-master",
         "google/apiclient"        : "dev-master"
     },

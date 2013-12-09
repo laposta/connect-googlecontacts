@@ -14,14 +14,14 @@ class ConfirmApiBridge implements CommandInterface
     private $config;
 
     /**
-     * @var ClientData
-     */
-    private $clientData;
-
-    /**
      * @var string
      */
     private $authCode;
+
+    /**
+     * @var array
+     */
+    private $tokens;
 
     /**
      * @param Config $config
@@ -29,26 +29,6 @@ class ConfirmApiBridge implements CommandInterface
     function __construct(Config $config)
     {
         $this->config = $config;
-    }
-
-    /**
-     * @param \GooglePosta\Entity\ClientData $clientData
-     *
-     * @return ConfirmApiBridge
-     */
-    public function setClientData($clientData)
-    {
-        $this->clientData = $clientData;
-
-        return $this;
-    }
-
-    /**
-     * @return \GooglePosta\Entity\ClientData
-     */
-    public function getClientData()
-    {
-        return $this->clientData;
     }
 
     /**
@@ -61,6 +41,14 @@ class ConfirmApiBridge implements CommandInterface
         $this->authCode = $authCode;
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTokens()
+    {
+        return $this->tokens;
     }
 
     /**
@@ -86,12 +74,9 @@ class ConfirmApiBridge implements CommandInterface
             throw new \RuntimeException('Unable to confirm link to google contacts. Please try again.');
         }
 
-        $this->clientData->setGoogleAccessToken(filter_var($tokens['access_token'], FILTER_SANITIZE_STRING));
-
-        if (!isset($tokens['refresh_token'])) {
-            return;
-        }
-
-        $this->clientData->setGoogleRefreshToken(filter_var($tokens['refresh_token'], FILTER_SANITIZE_STRING));
+        $this->tokens = array(
+            'access' => filter_var($tokens['access_token'], FILTER_SANITIZE_STRING),
+            'refresh' => isset($tokens['refresh_token']) ? filter_var($tokens['refresh_token'], FILTER_SANITIZE_STRING) : '',
+        );
     }
 }

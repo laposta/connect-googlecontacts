@@ -94,25 +94,10 @@ class StoreClientData implements CommandInterface
             throw new RuntimeException('Unable to load client data. A client token is required.');
         }
 
-        $this->dataStore->setContent(array(
-            'email' => $this->clientData->getEmail(),
-            'lapostaApiToken' => $this->encode($this->clientData->getLapostaApiToken()),
-            'googleAccessToken' => $this->encode($this->clientData->getGoogleAccessToken()),
-            'googleRefreshToken' => $this->encode($this->clientData->getGoogleRefreshToken()),
-        ));
-
+        $this->clientData->encode($this->crypto, array('mappings', 'returnUrl', 'lastUpdate'));
+        $this->dataStore->setContent($this->clientData->toArray());
         $this->dataStore->persist(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
 
         return $this;
-    }
-
-    /**
-     * @param string $value
-     *
-     * @return string
-     */
-    protected function encode($value)
-    {
-        return base64_encode($this->crypto->encode($value));
     }
 }

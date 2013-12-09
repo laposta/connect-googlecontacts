@@ -37,11 +37,6 @@ abstract class Controller extends \MVC\Controller
     protected $view;
 
     /**
-     * @var CommandFactory
-     */
-    protected $commandFactory;
-
-    /**
      * @var Session
      */
     protected $session;
@@ -52,17 +47,13 @@ abstract class Controller extends \MVC\Controller
      * @param View             $view
      * @param Config           $config
      * @param Resolver         $pathResolver
-     * @param CommandFactory   $commandFactory
-     * @param Session $session
      */
     function __construct(
         Web $web,
         Model $model,
         View $view,
         Config $config,
-        Resolver $pathResolver,
-        CommandFactory $commandFactory,
-        Session $session
+        Resolver $pathResolver
     ) {
         parent::__construct($web, $model, $view);
 
@@ -112,10 +103,6 @@ abstract class Controller extends \MVC\Controller
 
         $status  = new Status($statusCode);
         $content = $this->view->toString();
-
-        if (empty($content)) {
-            $content = $status->getStatusText() . "\n";
-        }
 
         $this->response->respond($status, $content);
     }

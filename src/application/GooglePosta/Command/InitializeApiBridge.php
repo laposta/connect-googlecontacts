@@ -4,7 +4,6 @@ namespace GooglePosta\Command;
 
 use Command\Abstraction\CommandInterface;
 use Config\Config;
-use GooglePosta\Entity\ClientData;
 
 class InitializeApiBridge implements CommandInterface
 {
@@ -12,11 +11,6 @@ class InitializeApiBridge implements CommandInterface
      * @var Config
      */
     private $config;
-
-    /**
-     * @var ClientData
-     */
-    private $clientData;
 
     /**
      * @var string
@@ -29,26 +23,6 @@ class InitializeApiBridge implements CommandInterface
     function __construct(Config $config)
     {
         $this->config = $config;
-    }
-
-    /**
-     * @param \GooglePosta\Entity\ClientData $clientData
-     *
-     * @return InitializeApiBridge
-     */
-    public function setClientData($clientData)
-    {
-        $this->clientData = $clientData;
-
-        return $this;
-    }
-
-    /**
-     * @return \GooglePosta\Entity\ClientData
-     */
-    public function getClientData()
-    {
-        return $this->clientData;
     }
 
     /**

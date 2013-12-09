@@ -2,42 +2,38 @@
 
 namespace GooglePosta\MVC;
 
-use GooglePosta\Command\ConfirmApiBridge;
-use GooglePosta\Command\InitializeApiBridge;
-use GooglePosta\Command\LoadClientData;
-use GooglePosta\Command\PurgeClientData;
-use GooglePosta\Command\StoreClientData;
-use GooglePosta\Entity\ClientData;
+use Config\Config;
 use GooglePosta\MVC\Base\Controller;
+use GooglePosta\MVC\Base\View;
+use GooglePosta\MVC\Model\Authority as AuthorityModel;
+use Path\Resolver;
 use Web\Exception\RuntimeException;
 use Web\Response\Status;
+use Web\Web;
 
 class Authority extends Controller
 {
     /**
-     * @var string
+     * @var AuthorityModel
      */
-    private $email;
+    protected $model;
 
     /**
-     * @var string
+     * @param Web            $web
+     * @param AuthorityModel $model
+     * @param View           $view
+     * @param Config         $config
+     * @param Resolver       $pathResolver
      */
-    private $apiToken;
-
-    /**
-     * @var string
-     */
-    private $clientToken;
-
-    /**
-     * @var ClientData
-     */
-    private $clientData;
-
-    /**
-     * @var string
-     */
-    private $returnUrl;
+    function __construct(
+        Web $web,
+        AuthorityModel $model,
+        View $view,
+        Config $config,
+        Resolver $pathResolver
+    ) {
+        parent::__construct($web, $model, $view, $config, $pathResolver);
+    }
 
     /**
      * Run the controller
@@ -48,106 +44,51 @@ class Authority extends Controller
      */
     public function run($params = array())
     {
-        $requestMethod    = strtoupper($this->request->server('REQUEST_METHOD'));
-        $googleAuthCode   = filter_var($this->request->get('code'), FILTER_SANITIZE_STRING);
-        $this->email      = filter_var($this->request->post('email'), FILTER_VALIDATE_EMAIL);
-        $this->apiToken   = filter_var($this->request->post('lapostaApiToken'), FILTER_SANITIZE_STRING);
-        $this->returnUrl  = filter_var($this->request->post('returnUrl'), FILTER_VALIDATE_URL);
-
-        if ($this->session->has('client.token')) {
-            $this->setClientToken($this->session->get('client.token'));
-        }
-        else {
-            $this->session->set('client.token', $this->getClientToken());
-        }
+        $requestMethod  = strtoupper($this->request->server('REQUEST_METHOD'));
+        $googleAuthCode = filter_var($this->request->get('code'), FILTER_SANITIZE_STRING);
 
         if (!empty($googleAuthCode)) {
-            $this->confirmApiBridge($googleAuthCode);
+            $this->confirmAuthority($googleAuthCode);
         }
         elseif ($requestMethod === 'DELETE') {
-            $this->purgeClientData();
+            $this->purgeAuthority();
         }
         else {
-            $this->initApiBridge();
+            $this->initAuthority();
         }
 
         $this->respond(Status::OK);
     }
 
     /**
-     * @param string $token
+     * @param string $identifier
+     *
+     * @return string
      */
-    protected function setClientToken($token)
+    protected function makeClientToken($identifier)
     {
-        $this->clientToken = filter_var(
-            $token,
-            FILTER_VALIDATE_REGEXP,
-            array(
-                'options' => array(
-                    'default' => null,
-                    'regexp'  => '/^[0-9a-f]{40}$/',
-                )
-            )
-        );
+        return sha1($identifier);
     }
 
     /**
-     * @return string
      * @throws \Web\Exception\RuntimeException
+     * @return Authority
      */
-    protected function getClientToken()
+    protected function purgeAuthority()
     {
-        if (!empty($this->clientToken)) {
-            return $this->clientToken;
-        }
+        $email     = filter_var($this->request->get('email'), FILTER_VALIDATE_EMAIL);
+        $returnUrl = filter_var($this->request->get('returnUrl'), FILTER_VALIDATE_URL);
 
         if (empty($this->email)) {
             throw new RuntimeException("Input not valid. Expected a valid 'email' value");
         }
 
-        $this->clientToken = sha1($this->email);
+        $this->model->clientToken = $this->makeClientToken($email);
+        $this->model->purgeClientData();
 
-        return $this->clientToken;
-    }
-
-    /**
-     * @return ClientData
-     */
-    protected function getClientData()
-    {
-        if ($this->clientData instanceof ClientData) {
-            return $this->clientData;
+        if (!empty($returnUrl)) {
+            $this->redirect($returnUrl);
         }
-
-        /** @var $command LoadClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\LoadClientData');
-        $command->setClientToken($this->getClientToken())->execute();
-
-        $this->clientData = $command->getClientData();
-
-        return $this->clientData;
-    }
-
-    /**
-     * @return Authority
-     */
-    protected function storeClientData()
-    {
-        /** @var $command StoreClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\StoreClientData');
-        $command->setClientToken($this->getClientToken())->setClientData($this->getClientData())->execute();
-
-        return $this;
-    }
-
-    /**
-     * @return Authority
-     */
-    protected function purgeClientData()
-    {
-        /** @var $command PurgeClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\PurgeClientData');
-        $command->setClientToken($this->getClientToken())->execute();
 
         return $this;
     }
@@ -156,8 +97,12 @@ class Authority extends Controller
      * @return Authority
      * @throws \Web\Exception\RuntimeException
      */
-    protected function initApiBridge()
+    protected function initAuthority()
     {
+        $email     = filter_var($this->request->post('email'), FILTER_VALIDATE_EMAIL);
+        $apiToken  = filter_var($this->request->post('lapostaApiToken'), FILTER_SANITIZE_STRING);
+        $returnUrl = filter_var($this->request->post('returnUrl'), FILTER_VALIDATE_URL);
+
         if (empty($this->email)) {
             throw new RuntimeException("Input not valid. Expected a valid 'email' value");
         }
@@ -166,17 +111,15 @@ class Authority extends Controller
             throw new RuntimeException("Input not valid. Expected a valid 'lapostaApiToken' value");
         }
 
-        $this->getClientData()->setEmail($this->email)->setLapostaApiToken($this->apiToken)->setReturnUrl(
-            $this->returnUrl
-        );
+        $this->model->clientToken = $this->makeClientToken($email);
+        $this->model->loadClientData();
 
-        /** @var $command InitializeApiBridge */
-        $command = $this->commandFactory->create('GooglePosta\Command\InitializeApiBridge');
-        $command->setClientData($this->getClientData())->execute();
+        $clientData                  = $this->model->clientData;
+        $clientData->email           = $email;
+        $clientData->lapostaApiToken = $apiToken;
+        $clientData->returnUrl       = $returnUrl;
 
-        $this->storeClientData();
-
-        $redirect = $command->getRedirectUrl();
+        $redirect = $this->model->retrieveGoogleAuthUrl();
 
         if (!empty($redirect)) {
             $this->redirect($redirect);
@@ -190,15 +133,15 @@ class Authority extends Controller
      *
      * @return Authority
      */
-    protected function confirmApiBridge($googleAuthCode)
+    protected function confirmAuthority($googleAuthCode)
     {
-        /** @var $command ConfirmApiBridge */
-        $command = $this->commandFactory->create('GooglePosta\Command\ConfirmApiBridge');
-        $command->setClientData($this->getClientData())->setAuthCode($googleAuthCode)->execute();
+        $tokens = $this->model->retrieveGoogleTokens($googleAuthCode);
 
-        $this->storeClientData();
+        $clientData                     = $this->model->clientData;
+        $clientData->googleAccessToken  = $tokens['access'];
+        $clientData->googleRefreshToken = $tokens['refresh'];
 
-        $redirect = $this->clientData->getReturnUrl();
+        $redirect = $clientData->returnUrl;
 
         if (!empty($redirect)) {
             $this->redirect($redirect);
