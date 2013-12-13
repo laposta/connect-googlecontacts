@@ -8,7 +8,7 @@ try {
     $bs->boot();
 }
 catch (\Exception $e) {
-    header('Status: 500 Internal Server Error');
+    header('HTTP/1.1 500 Internal Server Error');
 
     echo $e->getMessage() . "\n";
     echo $e->getTraceAsString() . "\n";
