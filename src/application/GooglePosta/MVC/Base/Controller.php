@@ -59,8 +59,6 @@ abstract class Controller extends \MVC\Controller
 
         $this->config         = $config;
         $this->path           = $pathResolver;
-        $this->commandFactory = $commandFactory;
-        $this->session        = $session;
     }
 
     /**

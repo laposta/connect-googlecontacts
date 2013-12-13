@@ -25,7 +25,7 @@ class Authority extends Model
     public $clientToken;
 
     /**
-     * @var ClientData
+     * @var \GooglePosta\Entity\ClientData
      */
     public $clientData;
 
@@ -41,6 +41,8 @@ class Authority extends Model
 
         $this->session     = $session;
         $this->clientToken = $session->get('client.token');
+
+        $this->loadClientData();
     }
 
     /**

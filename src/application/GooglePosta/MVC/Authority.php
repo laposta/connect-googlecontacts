@@ -103,11 +103,11 @@ class Authority extends Controller
         $apiToken  = filter_var($this->request->post('lapostaApiToken'), FILTER_SANITIZE_STRING);
         $returnUrl = filter_var($this->request->post('returnUrl'), FILTER_VALIDATE_URL);
 
-        if (empty($this->email)) {
+        if (empty($email)) {
             throw new RuntimeException("Input not valid. Expected a valid 'email' value");
         }
 
-        if (empty($this->apiToken)) {
+        if (empty($apiToken)) {
             throw new RuntimeException("Input not valid. Expected a valid 'lapostaApiToken' value");
         }
 
@@ -118,6 +118,8 @@ class Authority extends Controller
         $clientData->email           = $email;
         $clientData->lapostaApiToken = $apiToken;
         $clientData->returnUrl       = $returnUrl;
+
+        $this->model->persist();
 
         $redirect = $this->model->retrieveGoogleAuthUrl();
 
@@ -140,6 +142,8 @@ class Authority extends Controller
         $clientData                     = $this->model->clientData;
         $clientData->googleAccessToken  = $tokens['access'];
         $clientData->googleRefreshToken = $tokens['refresh'];
+
+        $this->model->persist();
 
         $redirect = $clientData->returnUrl;
 
