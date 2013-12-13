@@ -30,7 +30,7 @@ chown apache:apache data
 # or
 chmod ugo+w data
 ```
-#### Step 3 - Configure your apache or nginx
+#### Step 3 - Create your virtual host on apache or nginx
 Use the **public** directory as you virtual hosts web root. SSL is highly recommended though not a requirement for this application.
 
 
