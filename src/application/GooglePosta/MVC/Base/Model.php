@@ -3,6 +3,7 @@
 namespace GooglePosta\MVC\Base;
 
 use Command\CommandFactory;
+use GooglePosta\Command\CreateClientToken;
 
 class Model extends \MVC\Model
 {
@@ -28,5 +29,19 @@ class Model extends \MVC\Model
      */
     public function persist()
     {
+    }
+
+    /**
+     * @param string $email
+     *
+     * @return string
+     */
+    public function createClientToken($email)
+    {
+        /** @var $command CreateClientToken */
+        $command = $this->commandFactory->create('GooglePosta\Command\CreateClientToken');
+        $command->setIdentifier($email)->execute();
+
+        return $command->getClientToken();
     }
 }

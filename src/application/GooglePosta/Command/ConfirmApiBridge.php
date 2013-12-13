@@ -4,7 +4,6 @@ namespace GooglePosta\Command;
 
 use Command\Abstraction\CommandInterface;
 use Config\Config;
-use GooglePosta\Entity\ClientData;
 
 class ConfirmApiBridge implements CommandInterface
 {

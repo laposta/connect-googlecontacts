@@ -35,9 +35,4 @@ class ClientData extends SecureEntity
      * @var int
      */
     public $lastUpdate;
-
-    /**
-     * @var array
-     */
-    public $mappings = array();
 }

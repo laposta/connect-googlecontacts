@@ -4,6 +4,7 @@ namespace GooglePosta\MVC\Model;
 
 use Command\CommandFactory;
 use GooglePosta\Command\ConfirmApiBridge;
+use GooglePosta\Command\CreateClientToken;
 use GooglePosta\Command\InitializeApiBridge;
 use GooglePosta\Command\LoadClientData;
 use GooglePosta\Command\PurgeClientData;

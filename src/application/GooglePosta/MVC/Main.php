@@ -13,7 +13,9 @@ class Main extends Controller
      */
     protected function defineRoutes()
     {
-        $this->router->define('/authority/?output', 'GooglePosta\MVC\Authority');
+        $this->router->define('/authority/?action', 'GooglePosta\MVC\Authority');
+        $this->router->define('/sync/:action', 'GooglePosta\MVC\Sync');
+        $this->router->define('/event/:action/:client_token', 'GooglePosta\MVC\Sync');
         $this->router->catchall('GooglePosta\MVC\CatchAll');
 
         return $this;

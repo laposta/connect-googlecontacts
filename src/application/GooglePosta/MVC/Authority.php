@@ -46,11 +46,16 @@ class Authority extends Controller
     {
         $requestMethod  = strtoupper($this->request->server('REQUEST_METHOD'));
         $googleAuthCode = filter_var($this->request->get('code'), FILTER_SANITIZE_STRING);
+        $action         = '';
+
+        if (!empty($params['action'])) {
+            $action = strtoupper(filter_var($params['action'], FILTER_SANITIZE_STRING));
+        }
 
         if (!empty($googleAuthCode)) {
             $this->confirmAuthority($googleAuthCode);
         }
-        elseif ($requestMethod === 'DELETE') {
+        elseif ($requestMethod === 'DELETE' || $action === 'DELETE') {
             $this->purgeAuthority();
         }
         else {
@@ -61,29 +66,22 @@ class Authority extends Controller
     }
 
     /**
-     * @param string $identifier
-     *
-     * @return string
-     */
-    protected function makeClientToken($identifier)
-    {
-        return sha1($identifier);
-    }
-
-    /**
      * @throws \Web\Exception\RuntimeException
      * @return Authority
      */
     protected function purgeAuthority()
     {
-        $email     = filter_var($this->request->get('email'), FILTER_VALIDATE_EMAIL);
-        $returnUrl = filter_var($this->request->get('returnUrl'), FILTER_VALIDATE_URL);
+        $email     = $this->getValidatedEmail();
+        $apiToken  = $this->getValidatedApiToken();
+        $returnUrl = $this->getValidatedReturnUrl();
 
-        if (empty($this->email)) {
-            throw new RuntimeException("Input not valid. Expected a valid 'email' value");
+        $this->model->clientToken = $this->model->createClientToken($email);
+        $this->model->loadClientData();
+
+        if ($this->model->clientData->lapostaApiToken !== $apiToken) {
+            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
-        $this->model->clientToken = $this->makeClientToken($email);
         $this->model->purgeClientData();
 
         if (!empty($returnUrl)) {
@@ -99,19 +97,11 @@ class Authority extends Controller
      */
     protected function initAuthority()
     {
-        $email     = filter_var($this->request->post('email'), FILTER_VALIDATE_EMAIL);
-        $apiToken  = filter_var($this->request->post('lapostaApiToken'), FILTER_SANITIZE_STRING);
-        $returnUrl = filter_var($this->request->post('returnUrl'), FILTER_VALIDATE_URL);
+        $email     = $this->getValidatedEmail();
+        $apiToken  = $this->getValidatedApiToken();
+        $returnUrl = $this->getValidatedReturnUrl();
 
-        if (empty($email)) {
-            throw new RuntimeException("Input not valid. Expected a valid 'email' value");
-        }
-
-        if (empty($apiToken)) {
-            throw new RuntimeException("Input not valid. Expected a valid 'lapostaApiToken' value");
-        }
-
-        $this->model->clientToken = $this->makeClientToken($email);
+        $this->model->clientToken = $this->model->createClientToken($email);
         $this->model->loadClientData();
 
         $clientData                  = $this->model->clientData;
@@ -150,24 +140,6 @@ class Authority extends Controller
         if (!empty($redirect)) {
             $this->redirect($redirect);
         }
-
-        return $this;
-    }
-
-    /**
-     * @param $url
-     *
-     * @return Authority
-     */
-    protected function redirect($url)
-    {
-        if ($this->config->get('debug.header_location')) {
-            $this->view->setContent('<a href="' . $url . '" target="_blank">follow location header</a>');
-
-            return $this;
-        }
-
-        $this->response->redirect($url);
 
         return $this;
     }

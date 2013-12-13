@@ -6,6 +6,7 @@ use Command\CommandFactory;
 use Config\Config;
 use Path\Resolver;
 use Session\Session;
+use Web\Exception\RuntimeException;
 use Web\Response\Status;
 use Web\Web;
 
@@ -121,5 +122,64 @@ abstract class Controller extends \MVC\Controller
         }
 
         echo "</pre>\n";
+    }
+
+    /**
+     * @param $url
+     *
+     * @return Controller
+     */
+    protected function redirect($url)
+    {
+        if ($this->config->get('debug.header_location')) {
+            $this->view->setContent('<a href="' . $url . '" target="_blank">follow location header</a>');
+
+            return $this;
+        }
+
+        $this->response->redirect($url);
+
+        return $this;
+    }
+
+
+    /**
+     * @return string
+     * @throws RuntimeException
+     */
+    protected function getValidatedEmail()
+    {
+        $email = filter_var($this->request->post('email'), FILTER_VALIDATE_EMAIL);
+
+        if (empty($email)) {
+            throw new RuntimeException("Input not valid. Expected a valid 'email' value");
+        }
+
+        return $email;
+    }
+
+    /**
+     * @return string
+     * @throws RuntimeException
+     */
+    protected function getValidatedApiToken()
+    {
+        $apiToken  = filter_var($this->request->post('lapostaApiToken'), FILTER_SANITIZE_STRING);
+
+        if (empty($apiToken)) {
+            throw new RuntimeException("Input not valid. Expected a valid 'lapostaApiToken' value");
+        }
+
+        return $apiToken;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getValidatedReturnUrl()
+    {
+        $returnUrl = filter_var($this->request->post('returnUrl'), FILTER_VALIDATE_URL);
+
+        return $returnUrl;
     }
 }
