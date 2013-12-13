@@ -17,27 +17,27 @@ Dependencies
 Install
 -------
 
-1. Get the source and install source dependencies
+#### Step 1 - Get the source and install source dependencies
 ```sh
 git clone https://github.com/laposta/googleposta.git googleposta \
   && cd googleposta \
   && composer install --no-dev --prefer-dist --optimize-autoloader
 ```
-2. Ensure that data directory is writeable
+
+#### Step 2 - Ensure that data directory is writable
 ```sh
 chown apache:apache data
-```
-or
-```sh
+# or
 chmod ugo+w data
 ```
-3. Configure your apache or nginx to use the public directory as it's webroot for your {googleposta_host} preferably with SSL enabled.
+#### Step 3 - Configure your apache or nginx
+Use the **public** directory as you virtual hosts web root. SSL is highly recommended though not a requirement for this application.
 
 
 Configure
 ---------
 
-The [config.php](/config.php) file contains default values for the application to be run without a customized configuration. Only production values should be added to this file. A config.local.php file can be created alongside this file where values can be overridden.
+The [config.php](/config.php) file contains default values for the application to be run without a customized configuration. Only production values should be added to this file. A **config.local.php** file can be created alongside this file where values can be overridden.
 
 Use the following command to safely create a copy for your application instance:
 ```sh
