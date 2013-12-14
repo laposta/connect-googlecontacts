@@ -15,7 +15,6 @@ class Main extends Controller
     {
         $this->router->define('/authority/?action', 'GooglePosta\MVC\Authority');
         $this->router->define('/sync/:action', 'GooglePosta\MVC\Sync');
-        $this->router->define('/event/:action/:client_token', 'GooglePosta\MVC\Sync');
         $this->router->catchall('GooglePosta\MVC\CatchAll');
 
         return $this;

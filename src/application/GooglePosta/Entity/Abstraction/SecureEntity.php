@@ -31,7 +31,7 @@ class SecureEntity extends Entity implements SecureEntityInterface
                 continue;
             }
 
-            $this->$key = $cryptograph->encode(base64_decode($value));
+            $this->$key = $cryptograph->decode(base64_decode($value));
         }
     }
 } 

@@ -7,10 +7,9 @@ use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use GooglePosta\Entity\ClientData;
-use Security\Cryptograph;
 use RuntimeException;
 
-class LoadClientData implements CommandInterface
+class LoadClientMap implements CommandInterface
 {
     /**
      * @var string
@@ -28,34 +27,31 @@ class LoadClientData implements CommandInterface
     private $dataStore;
 
     /**
-     * @var ClientData
+     * @var array
      */
-    private $clientData;
-
-    /**
-     * @var Cryptograph
-     */
-    private $crypto;
+    private $map = array(
+        'lists' => array(),
+        'fields' => array(),
+        'contacts' => array(),
+    );
 
     /**
      * @param Config      $config
-     * @param Cryptograph $crypto
      * @param DataStore   $dataStore
      */
-    function __construct(Config $config, Cryptograph $crypto, DataStore $dataStore)
+    function __construct(Config $config, DataStore $dataStore)
     {
         $this->config     = $config;
-        $this->crypto     = $crypto;
         $this->dataStore  = $dataStore;
         $this->clientData = new ClientData();
     }
 
     /**
-     * @return \GooglePosta\Entity\ClientData
+     * @return array
      */
-    public function getClientData()
+    public function getMap()
     {
-        return $this->clientData;
+        return $this->map;
     }
 
     /**
@@ -81,19 +77,20 @@ class LoadClientData implements CommandInterface
     /**
      * Execute the command
      *
-     * @return CommandInterface
+     * @return LoadClientMap
      *
      * @throws \RuntimeException
      */
     public function execute()
     {
         if (empty($this->clientToken)) {
-            throw new RuntimeException('Unable to load client data. A client token is required.');
+            throw new RuntimeException('Unable to load client mappings. A client token is required.');
         }
 
-        $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
-        $this->clientData->fromArray($this->dataStore->hasContent() ? $this->dataStore->getContent() : array());
-        $this->clientData->decode($this->crypto, array('returnUrl', 'lastUpdate'));
+        $this->dataStore->retrieve(
+            new File($this->config->get('path.data') . '/mappings/' . $this->clientToken . '.php')
+        );
+        $this->map = $this->dataStore->hasContent() ? $this->dataStore->getContent() : array();
 
         return $this;
     }

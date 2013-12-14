@@ -32,6 +32,14 @@ class DataStore
     }
 
     /**
+     * @return bool
+     */
+    public function hasContent()
+    {
+        return !is_null($this->content);
+    }
+
+    /**
      * Persist the DataStore's content using the given adapter.
      *
      * @param AdapterInterface $adapter

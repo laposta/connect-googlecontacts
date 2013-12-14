@@ -4,6 +4,9 @@ if (function_exists('pre_dump')) {
     return;
 }
 
+/**
+ * var_dump equivalent with a html <pre> tag wrapper.
+ */
 function pre_dump()
 {
     echo '<pre>'."\n";

@@ -53,7 +53,7 @@ class ConfirmApiBridge implements CommandInterface
     /**
      * Execute the command
      *
-     * @return CommandInterface
+     * @return ConfirmApiBridge
      *
      * @throws \RuntimeException
      */

@@ -4,6 +4,7 @@ namespace GooglePosta\Command;
 
 use Command\Abstraction\CommandInterface;
 use Config\Config;
+use Google_Client;
 
 class InitializeApiBridge implements CommandInterface
 {
@@ -18,11 +19,18 @@ class InitializeApiBridge implements CommandInterface
     private $redirectUrl;
 
     /**
-     * @param Config $config
+     * @var \Google_Client
      */
-    function __construct(Config $config)
+    private $client;
+
+    /**
+     * @param Config        $config
+     * @param Google_Client $client
+     */
+    function __construct(Config $config, Google_Client $client)
     {
         $this->config = $config;
+        $this->client = $client;
     }
 
     /**
@@ -36,17 +44,14 @@ class InitializeApiBridge implements CommandInterface
     /**
      * Execute the command
      *
-     * @return CommandInterface
+     * @return InitializeApiBridge
      */
     public function execute()
     {
-        $client = new \Google_Client();
-        $client->setClientId($this->config->get('google.client_id'));
-        $client->setClientSecret($this->config->get('google.client_secret'));
-        $client->setRedirectUri($this->config->get('google.return_url'));
+        $client = $this->client;
+
         $client->setAccessType('offline');
         $client->setApprovalPrompt('force');
-
         $client->setScopes(
             array(
                 'https://www.google.com/m8/feeds',

@@ -6,7 +6,7 @@ use Command\Abstraction\CommandInterface;
 use Config\Config;
 use RuntimeException;
 
-class PurgeClientData implements CommandInterface
+class PurgeClientMap implements CommandInterface
 {
     /**
      * @var string
@@ -49,7 +49,7 @@ class PurgeClientData implements CommandInterface
     /**
      * Execute the command
      *
-     * @return CommandInterface
+     * @return PurgeClientData
      *
      * @throws \RuntimeException
      */
@@ -59,7 +59,7 @@ class PurgeClientData implements CommandInterface
             throw new RuntimeException('Unable to purge client data. A client token is required.');
         }
 
-        $filePath = $this->config->get('path.data') . '/' . $this->clientToken . '.php';
+        $filePath = $this->config->get('path.data') . '/maps/' . $this->clientToken . '.php';
 
         if (!file_exists($filePath)) {
             return $this;

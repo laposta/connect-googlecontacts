@@ -6,11 +6,9 @@ use Command\Abstraction\CommandInterface;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
-use GooglePosta\Entity\ClientData;
-use Security\Cryptograph;
 use RuntimeException;
 
-class LoadClientData implements CommandInterface
+class StoreClientMap implements CommandInterface
 {
     /**
      * @var string
@@ -28,40 +26,36 @@ class LoadClientData implements CommandInterface
     private $dataStore;
 
     /**
-     * @var ClientData
+     * @var array
      */
-    private $clientData;
-
-    /**
-     * @var Cryptograph
-     */
-    private $crypto;
+    private $map;
 
     /**
      * @param Config      $config
-     * @param Cryptograph $crypto
      * @param DataStore   $dataStore
      */
-    function __construct(Config $config, Cryptograph $crypto, DataStore $dataStore)
+    function __construct(Config $config, DataStore $dataStore)
     {
         $this->config     = $config;
-        $this->crypto     = $crypto;
         $this->dataStore  = $dataStore;
-        $this->clientData = new ClientData();
     }
 
     /**
-     * @return \GooglePosta\Entity\ClientData
+     * @param array $map
+     *
+     * @return StoreClientMap
      */
-    public function getClientData()
+    public function setMap($map)
     {
-        return $this->clientData;
+        $this->map = $map;
+
+        return $this;
     }
 
     /**
      * @param string $clientToken
      *
-     * @return LoadClientData
+     * @return StoreClientMap
      */
     public function setClientToken($clientToken)
     {
@@ -81,7 +75,7 @@ class LoadClientData implements CommandInterface
     /**
      * Execute the command
      *
-     * @return CommandInterface
+     * @return StoreClientMap
      *
      * @throws \RuntimeException
      */
@@ -91,9 +85,14 @@ class LoadClientData implements CommandInterface
             throw new RuntimeException('Unable to load client data. A client token is required.');
         }
 
-        $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
-        $this->clientData->fromArray($this->dataStore->hasContent() ? $this->dataStore->getContent() : array());
-        $this->clientData->decode($this->crypto, array('returnUrl', 'lastUpdate'));
+        if (is_null($this->map)) {
+            return $this;
+        }
+
+        $this->dataStore->setContent($this->map);
+        $this->dataStore->persist(
+            new File($this->config->get('path.data') . '/maps/' . $this->clientToken . '.php')
+        );
 
         return $this;
     }

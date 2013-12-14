@@ -3,11 +3,12 @@
 namespace GooglePosta\MVC;
 
 use Config\Config;
+use GooglePosta\Entity\ClientData;
 use GooglePosta\MVC\Base\Controller;
 use GooglePosta\MVC\Base\View;
 use GooglePosta\MVC\Model\Sync as SyncModel;
 use Path\Resolver;
-use Web\Exception\RuntimeException;
+use RuntimeException;
 use Web\Response\Status;
 use Web\Web;
 
@@ -40,7 +41,7 @@ class Sync extends Controller
      *
      * @param array $params
      *
-     * @throws \Web\Exception\RuntimeException
+     * @throws \RuntimeException
      */
     public function run($params = array())
     {
@@ -51,9 +52,9 @@ class Sync extends Controller
         }
 
         if ($action === 'IMPORT') {
-            $this->importContacts();
+            $this->importFromGoogle();
         }
-        else if ($action === 'CONSUME') {
+        else if ($action === 'CONSUME-EVENTS') {
             $this->consumeEvents();
         }
         else {
@@ -64,24 +65,26 @@ class Sync extends Controller
     }
 
     /**
-     * @throws \Web\Exception\RuntimeException
-     *
      * @return Sync
+     * @throws \RuntimeException
      */
-    protected function importContacts()
+    protected function importFromGoogle()
     {
         $email     = $this->getValidatedEmail();
         $apiToken  = $this->getValidatedApiToken();
         $returnUrl = $this->getValidatedReturnUrl();
 
-        $this->model->clientToken = $this->model->createClientToken($email);
-        $this->model->loadClientData();
+        $this->model->setClientToken($this->model->createClientToken($email));
 
-        if ($this->model->clientData->lapostaApiToken !== $apiToken) {
+        if ($this->model->getClientData()->lapostaApiToken !== $apiToken) {
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
         // TODO : initiate synchronisation of contacts from Google
+
+        echo "Import from google";
+
+        return;
 
         if (!empty($returnUrl)) {
             $this->redirect($returnUrl);
@@ -92,9 +95,19 @@ class Sync extends Controller
 
     /**
      * @return Sync
+     * @throws \RuntimeException
      */
     protected function consumeEvents()
     {
+        $clientToken = filter_var($this->request->get('clientToken'), FILTER_SANITIZE_STRING);
+        $clientData = $this->model->setClientToken($clientToken)->getClientData();
+
+        if (!($clientData instanceof ClientData) || empty($clientData->email)) {
+            throw new RuntimeException("Given client token '$clientToken' does not exist.");
+        }
+
+        $this->model->getClientData()->dump();
+
         // TODO : process events.
 
         $data = $this->request->put();

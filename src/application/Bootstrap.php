@@ -25,6 +25,8 @@ class Bootstrap
     protected $config;
 
     /**
+     * Default constructor
+     *
      * @param \Depend\Manager $dm
      * @param string          $projectRoot
      * @param string          $appController
@@ -65,6 +67,8 @@ class Bootstrap
     }
 
     /**
+     * Load any php files found in the given path.
+     *
      * @param $path
      *
      * @return $this
@@ -99,7 +103,7 @@ class Bootstrap
     }
 
     /**
-     * Get the configuration
+     * Get the configuration from config.php and config.local.php
      *
      * @return Config
      */
@@ -110,7 +114,6 @@ class Bootstrap
         }
 
         /** @noinspection PhpIncludeInspection */
-
         $this->dm->describe(
             'Config\Config',
             array(
@@ -123,18 +126,33 @@ class Bootstrap
     }
 
     /**
-     * Initialize the dependency manager descriptors
+     * Initialize the dependency manager descriptors and setup default parameters and injectors.
      */
     protected function initDependencies()
     {
-        $config = $this->getConfig();
+        /*
+         * Set the default class for InjectorInterface dependencies
+         */
+        $this->dm->implement(
+            'Depend\Abstraction\InjectorInterface',
+            'Depend\Injector'
+        );
 
+        /** @var $injectorFactory \Depend\InjectorFactory */
+        $injectorFactory = $this->dm->get('Depend\InjectorFactory');
+        $config          = $this->getConfig();
 
+        /*
+         * Set the default class for DependencyContainerInterface dependencies
+         */
         $this->dm->implement(
             'Web\Route\Abstraction\DependencyContainerInterface',
             'Web\Route\DependManagerProxy'
         );
 
+        /*
+         * Set default parameters for the Path\Resolver class
+         */
         $this->dm->describe(
             'Path\Resolver',
             array(
@@ -145,10 +163,26 @@ class Bootstrap
             )
         );
 
+        /*
+         * Set default parameters for the Security\Cryptograph class
+         */
         $this->dm->describe(
             'Security\Cryptograph',
             array(
                 $config->get('security.encryption_key')
+            )
+        );
+
+        /*
+         * Set some injector calls for the Google_Client class
+         */
+        $this->dm->describe(
+            'Google_Client',
+            null,
+            array(
+                $injectorFactory->create('setClientId', $config->get('google.client_id')),
+                $injectorFactory->create('setClientSecret', $config->get('google.client_secret')),
+                $injectorFactory->create('setRedirectUri', $config->get('google.return_url')),
             )
         );
     }

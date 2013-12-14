@@ -75,10 +75,9 @@ class Authority extends Controller
         $apiToken  = $this->getValidatedApiToken();
         $returnUrl = $this->getValidatedReturnUrl();
 
-        $this->model->clientToken = $this->model->createClientToken($email);
-        $this->model->loadClientData();
+        $this->model->setClientToken($this->model->createClientToken($email));
 
-        if ($this->model->clientData->lapostaApiToken !== $apiToken) {
+        if ($this->model->getClientData()->lapostaApiToken !== $apiToken) {
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
@@ -101,17 +100,16 @@ class Authority extends Controller
         $apiToken  = $this->getValidatedApiToken();
         $returnUrl = $this->getValidatedReturnUrl();
 
-        $this->model->clientToken = $this->model->createClientToken($email);
-        $this->model->loadClientData();
+        $this->model->setClientToken($this->model->createClientToken($email));
 
-        $clientData                  = $this->model->clientData;
+        $clientData                  = $this->model->getClientData();
         $clientData->email           = $email;
         $clientData->lapostaApiToken = $apiToken;
         $clientData->returnUrl       = $returnUrl;
 
         $this->model->persist();
 
-        $redirect = $this->model->retrieveGoogleAuthUrl();
+        $redirect = $this->model->getGoogleAuthUrl();
 
         if (!empty($redirect)) {
             $this->redirect($redirect);
@@ -127,9 +125,9 @@ class Authority extends Controller
      */
     protected function confirmAuthority($googleAuthCode)
     {
-        $tokens = $this->model->retrieveGoogleTokens($googleAuthCode);
+        $tokens = $this->model->getGoogleTokens($googleAuthCode);
 
-        $clientData                     = $this->model->clientData;
+        $clientData                     = $this->model->getClientData();
         $clientData->googleAccessToken  = $tokens['access'];
         $clientData->googleRefreshToken = $tokens['refresh'];
 

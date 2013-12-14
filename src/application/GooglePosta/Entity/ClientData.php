@@ -34,5 +34,5 @@ class ClientData extends SecureEntity
     /**
      * @var int
      */
-    public $lastUpdate;
+    public $lastImport;
 }

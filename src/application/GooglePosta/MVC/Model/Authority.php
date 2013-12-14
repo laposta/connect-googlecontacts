@@ -4,7 +4,6 @@ namespace GooglePosta\MVC\Model;
 
 use Command\CommandFactory;
 use GooglePosta\Command\ConfirmApiBridge;
-use GooglePosta\Command\CreateClientToken;
 use GooglePosta\Command\InitializeApiBridge;
 use GooglePosta\Command\LoadClientData;
 use GooglePosta\Command\PurgeClientData;
@@ -23,12 +22,54 @@ class Authority extends Model
     /**
      * @var string
      */
-    public $clientToken;
+    private $clientToken;
 
     /**
      * @var \GooglePosta\Entity\ClientData
      */
-    public $clientData;
+    private $clientData;
+
+    /**
+     * @param \GooglePosta\Entity\ClientData $clientData
+     *
+     * @return Authority
+     */
+    public function setClientData(ClientData $clientData)
+    {
+        $this->clientData = $clientData;
+
+        return $this;
+    }
+
+    /**
+     * @return \GooglePosta\Entity\ClientData
+     */
+    public function getClientData()
+    {
+        $this->loadClientData();
+
+        return $this->clientData;
+    }
+
+    /**
+     * @param string $clientToken
+     *
+     * @return Authority
+     */
+    public function setClientToken($clientToken)
+    {
+        $this->clientToken = $clientToken;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientToken()
+    {
+        return $this->clientToken;
+    }
 
     /**
      * Constructor override
@@ -49,7 +90,7 @@ class Authority extends Model
     /**
      * @return Authority
      */
-    public function loadClientData()
+    protected function loadClientData()
     {
         if ($this->clientData instanceof ClientData || empty($this->clientToken)) {
             return $this;
@@ -104,7 +145,7 @@ class Authority extends Model
     /**
      * @return string
      */
-    public function retrieveGoogleAuthUrl()
+    public function getGoogleAuthUrl()
     {
         /** @var $command InitializeApiBridge */
         $command = $this->commandFactory->create('GooglePosta\Command\InitializeApiBridge');
@@ -118,7 +159,7 @@ class Authority extends Model
      *
      * @return array array('access' => '', 'refresh' => '');
      */
-    public function retrieveGoogleTokens($googleAuthCode)
+    public function getGoogleTokens($googleAuthCode)
     {
         /** @var $command ConfirmApiBridge */
         $command = $this->commandFactory->create('GooglePosta\Command\ConfirmApiBridge');
