@@ -4,6 +4,7 @@ namespace MVC;
 
 use Web\Request\Request;
 use Web\Response\Response;
+use Web\Response\Status;
 use Web\Route\Router;
 use Web\Web;
 
@@ -71,5 +72,7 @@ abstract class Controller
         echo "<pre>\n";
         echo $e->getMessage() . "\n";
         echo "</pre>\n";
+
+        $this->response->respond(new Status(Status::INTERNAL_SERVER_ERROR));
     }
 }

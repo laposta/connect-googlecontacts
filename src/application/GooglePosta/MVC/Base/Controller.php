@@ -122,6 +122,8 @@ abstract class Controller extends \MVC\Controller
         }
 
         echo "</pre>\n";
+
+        $this->response->respond(new Status(Status::INTERNAL_SERVER_ERROR));
     }
 
     /**
