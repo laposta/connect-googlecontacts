@@ -10,10 +10,18 @@ class SecureEntity extends Entity implements SecureEntityInterface
     /**
      * @inheritdoc
      */
-    public function encode(CryptographInterface $cryptograph, array $ignore = array())
+    public function encode(CryptographInterface $cryptograph)
     {
+        $ignore = $this->ignore();
+
         foreach ($this as $key => $value) {
-            if (in_array($key, $ignore)) {
+            if (in_array($key, $ignore) || empty($value)) {
+                continue;
+            }
+
+            if ($value instanceof SecureEntityInterface) {
+                $value->encode($cryptograph);
+
                 continue;
             }
 
@@ -24,14 +32,30 @@ class SecureEntity extends Entity implements SecureEntityInterface
     /**
      * @inheritdoc
      */
-    public function decode(CryptographInterface $cryptograph, array $ignore = array())
+    public function decode(CryptographInterface $cryptograph)
     {
+        $ignore = $this->ignore();
+
         foreach ($this as $key => $value) {
-            if (in_array($key, $ignore)) {
+            if (in_array($key, $ignore) || empty($value)) {
+                continue;
+            }
+
+            if ($value instanceof SecureEntityInterface) {
+                $value->decode($cryptograph);
+
                 continue;
             }
 
             $this->$key = $cryptograph->decode(base64_decode($value));
         }
     }
-} 
+
+    /**
+     * @inheritdoc
+     */
+    public function ignore()
+    {
+        return array();
+    }
+}

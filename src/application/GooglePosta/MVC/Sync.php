@@ -80,6 +80,8 @@ class Sync extends Controller
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
+        $this->model->syncGoogle();
+
         // TODO : initiate synchronisation of contacts from Google
 
         echo "Import from google";

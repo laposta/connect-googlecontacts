@@ -2,17 +2,11 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
-use Config\Config;
+use Command\Abstraction\AbstractCommand;
 use Google_Client;
 
-class InitializeApiBridge implements CommandInterface
+class InitializeApiBridge extends AbstractCommand
 {
-    /**
-     * @var Config
-     */
-    private $config;
-
     /**
      * @var string
      */
@@ -24,12 +18,10 @@ class InitializeApiBridge implements CommandInterface
     private $client;
 
     /**
-     * @param Config        $config
      * @param Google_Client $client
      */
-    function __construct(Config $config, Google_Client $client)
+    function __construct(Google_Client $client)
     {
-        $this->config = $config;
         $this->client = $client;
     }
 

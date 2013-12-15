@@ -2,16 +2,11 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
-use Config\Config;
+use Command\Abstraction\AbstractCommand;
+use Google_Client;
 
-class ConfirmApiBridge implements CommandInterface
+class ConfirmApiBridge extends AbstractCommand
 {
-    /**
-     * @var Config
-     */
-    private $config;
-
     /**
      * @var string
      */
@@ -23,11 +18,16 @@ class ConfirmApiBridge implements CommandInterface
     private $tokens;
 
     /**
-     * @param Config $config
+     * @var Google_Client
      */
-    function __construct(Config $config)
+    private $client;
+
+    /**
+     * @param Google_Client $client
+     */
+    function __construct(Google_Client $client)
     {
-        $this->config = $config;
+        $this->client = $client;
     }
 
     /**
@@ -54,15 +54,11 @@ class ConfirmApiBridge implements CommandInterface
      * Execute the command
      *
      * @return ConfirmApiBridge
-     *
      * @throws \RuntimeException
      */
     public function execute()
     {
-        $client = new \Google_Client();
-        $client->setClientId($this->config->get('google.client_id'));
-        $client->setClientSecret($this->config->get('google.client_secret'));
-        $client->setRedirectUri($this->config->get('google.return_url'));
+        $client = $this->client;
 
         $tokens = json_decode(
             $client->authenticate($this->authCode),
@@ -73,9 +69,6 @@ class ConfirmApiBridge implements CommandInterface
             throw new \RuntimeException('Unable to confirm link to google contacts. Please try again.');
         }
 
-        $this->tokens = array(
-            'access' => filter_var($tokens['access_token'], FILTER_SANITIZE_STRING),
-            'refresh' => isset($tokens['refresh_token']) ? filter_var($tokens['refresh_token'], FILTER_SANITIZE_STRING) : '',
-        );
+        $this->tokens = $tokens;
     }
 }

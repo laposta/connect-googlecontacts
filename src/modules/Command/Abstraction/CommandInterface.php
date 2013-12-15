@@ -2,7 +2,7 @@
 
 namespace Command\Abstraction;
 
-interface CommandInterface 
+interface CommandInterface
 {
     /**
      * Execute the command

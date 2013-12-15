@@ -2,10 +2,10 @@
 
 namespace Logger;
 
-use Psr\Log\AbstractLogger;
-use Psr\Log\LoggerInterface;
+use Logger\Abstraction\AbstractLogger;
+use Logger\Abstraction\LoggerInterface;
 
-class LoggerQueue extends AbstractLogger
+class Queue extends AbstractLogger
 {
     /**
      * @var \SplObjectStorage
@@ -21,7 +21,7 @@ class LoggerQueue extends AbstractLogger
      *
      * @return null
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, $context = array())
     {
         $this->queue->rewind();
 

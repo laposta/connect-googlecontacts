@@ -2,13 +2,13 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
+use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use RuntimeException;
 
-class StoreClientMap implements CommandInterface
+class StoreClientMap extends AbstractCommand
 {
     /**
      * @var string

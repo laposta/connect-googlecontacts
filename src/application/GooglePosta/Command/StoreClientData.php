@@ -2,15 +2,15 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
+use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use GooglePosta\Entity\ClientData;
-use Security\Cryptograph;
 use RuntimeException;
+use Security\Cryptograph;
 
-class StoreClientData implements CommandInterface
+class StoreClientData extends AbstractCommand
 {
     /**
      * @var string
@@ -94,7 +94,7 @@ class StoreClientData implements CommandInterface
             throw new RuntimeException('Unable to load client data. A client token is required.');
         }
 
-        $this->clientData->encode($this->crypto, array('returnUrl', 'lastUpdate'));
+        $this->clientData->encode($this->crypto);
         $this->dataStore->setContent($this->clientData->toArray());
         $this->dataStore->persist(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
 

@@ -4,43 +4,38 @@ namespace GooglePosta\Entity;
 
 use GooglePosta\Entity\Abstraction\SecureEntity;
 
-class ClientData extends SecureEntity
+class GoogleTokenSet extends SecureEntity
 {
     /**
      * @var string
      */
-    public $email;
+    public $access_token;
 
     /**
      * @var string
      */
-    public $lapostaApiToken;
-
-    /**
-     * @var string
-     */
-    public $returnUrl;
-
-    /**
-     * @var \GooglePosta\Entity\GoogleTokenSet
-     */
-    public $googleTokenSet;
-
-    /**
-     * @var string
-     */
-    public $googleRefreshToken;
+    public $token_type;
 
     /**
      * @var int
      */
-    public $lastImport;
+    public $expires_in;
+
+    /**
+     * @var string
+     */
+    public $refresh_token;
+
+    /**
+     * @var int
+     */
+    public $created;
 
     /**
      * @inheritdoc
      */
     public function ignore()
     {
-        return array('returnUrl', 'lastUpdate');
+        return array('token_type', 'expires_in', 'created');
     }
 }

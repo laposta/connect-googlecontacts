@@ -2,14 +2,14 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
+use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use GooglePosta\Entity\ClientData;
 use RuntimeException;
 
-class LoadClientMap implements CommandInterface
+class LoadClientMap extends AbstractCommand
 {
     /**
      * @var string
@@ -29,11 +29,7 @@ class LoadClientMap implements CommandInterface
     /**
      * @var array
      */
-    private $map = array(
-        'lists' => array(),
-        'fields' => array(),
-        'contacts' => array(),
-    );
+    private $map = array();
 
     /**
      * @param Config      $config

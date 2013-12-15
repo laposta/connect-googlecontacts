@@ -2,8 +2,11 @@
 
 namespace Command;
 
+use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Command\Abstraction\FactoryInterface;
+use Logger\Abstraction\LoggerAwareInterface;
+use Logger\Abstraction\LoggerInterface;
 
 class CommandFactory implements FactoryInterface
 {
@@ -18,15 +21,22 @@ class CommandFactory implements FactoryInterface
     private $queuePrototype;
 
     /**
+     * @var LoggerInterface
+     */
+    private $log;
+
+    /**
      * Default constructor
      *
      * @param DependManagerProxy $dependencyManager
      * @param CommandQueue       $queuePrototype
+     * @param LoggerInterface    $logger
      */
-    function __construct(DependManagerProxy $dependencyManager, CommandQueue $queuePrototype)
+    function __construct(DependManagerProxy $dependencyManager, CommandQueue $queuePrototype, LoggerInterface $logger)
     {
         $this->dependencyManager = $dependencyManager;
         $this->queuePrototype    = $queuePrototype;
+        $this->log               = $logger;
     }
 
     /**
@@ -38,7 +48,14 @@ class CommandFactory implements FactoryInterface
      */
     public function create($className)
     {
-        return clone $this->dependencyManager->get($className);
+        /** @var $clone AbstractCommand */
+        $clone = clone $this->dependencyManager->get($className);
+
+        if ($clone instanceof LoggerAwareInterface) {
+            $clone->setLogger($this->log);
+        }
+
+        return $clone;
     }
 
     /**

@@ -18,55 +18,56 @@
  *
  * Use your preferred editor to modify the config.local.php file for your specific requirements.
  */
-return array(
 
+use Logger\Abstraction\LogLevel;
+
+return array(
     /*
      * Timezone to be used for the application
      */
     'timezone'    => 'Europe/Amsterdam',
-
     /*
      * The applications environment.
      */
     'environment' => 'production',
-
     /*
      * Debug settings
      */
     'debug'       => array(
-
         /*
          * Print a link to the location header instead of setting the location header.
          */
         'header_location' => false,
-
         /*
          * Print a backtrace when an error / exception occurs.
          */
         'print_backtrace' => false,
+        /*
+         * The log verbosity level for the application.
+         */
+        'log_level'       => LogLevel::ERROR,
     ),
-
     /*
      * Application paths
      */
     'path'        => array(
-
         /*
          * Path the application root.
          */
         'application' => __DIR__,
-
         /*
          * Path the applications document (web) root. This folder is publicly accessible to the www.
          */
         'document'    => __DIR__ . '/public',
-
         /*
          * Applications data directory
          */
         'data'        => __DIR__ . '/data',
+        /*
+         * Application log directory
+         */
+        'log'         => __DIR__ . '/logs',
     ),
-
     /*
      * Configuration settings for access to Google APIs.
      */
@@ -75,17 +76,14 @@ return array(
         'client_id'     => '915139937104-frrse699unjsdkmr30kmsvboi1g5hghm.apps.googleusercontent.com',
         'return_url'    => 'https://dev01.laposta-infra.nl/authority/',
     ),
-
     /*
      * Security related settings.
      */
     'security'    => array(
-
         /*
          * Use https when generating urls for this application.
          */
         'https'          => true,
-
         /*
          * Key to use for data encryption.
          */

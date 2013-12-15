@@ -2,9 +2,9 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
+use Command\Abstraction\AbstractCommand;
 
-class CreateClientToken implements CommandInterface
+class CreateClientToken extends AbstractCommand
 {
     /**
      * @var string

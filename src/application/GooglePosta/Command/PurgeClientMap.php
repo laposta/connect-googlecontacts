@@ -2,11 +2,11 @@
 
 namespace GooglePosta\Command;
 
-use Command\Abstraction\CommandInterface;
+use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use RuntimeException;
 
-class PurgeClientMap implements CommandInterface
+class PurgeClientMap extends AbstractCommand
 {
     /**
      * @var string

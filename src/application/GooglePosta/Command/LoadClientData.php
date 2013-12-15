@@ -2,15 +2,16 @@
 
 namespace GooglePosta\Command;
 
+use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use GooglePosta\Entity\ClientData;
-use Security\Cryptograph;
 use RuntimeException;
+use Security\Cryptograph;
 
-class LoadClientData implements CommandInterface
+class LoadClientData extends AbstractCommand
 {
     /**
      * @var string
@@ -93,7 +94,7 @@ class LoadClientData implements CommandInterface
 
         $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
         $this->clientData->fromArray($this->dataStore->hasContent() ? $this->dataStore->getContent() : array());
-        $this->clientData->decode($this->crypto, array('returnUrl', 'lastUpdate'));
+        $this->clientData->decode($this->crypto);
 
         return $this;
     }

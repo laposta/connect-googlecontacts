@@ -6,6 +6,7 @@ use GooglePosta\Command\LoadClientData;
 use GooglePosta\Command\LoadClientMap;
 use GooglePosta\Command\StoreClientData;
 use GooglePosta\Command\StoreClientMap;
+use GooglePosta\Command\Sync\SyncGoogle;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\MVC\Base\Model;
 
@@ -159,6 +160,15 @@ class Sync extends Model
         /** @var $command StoreClientMap */
         $command = $this->commandFactory->create('GooglePosta\Command\StoreClientMap');
         $command->setClientToken($this->clientToken)->setMap($this->clientMap)->execute();
+
+        return $this;
+    }
+
+    public function syncGoogle()
+    {
+        /** @var $command SyncGoogle */
+        $command = $this->commandFactory->create('GooglePosta\Command\Sync\SyncGoogle');
+        $command->setClientData($this->getClientData())->execute();
 
         return $this;
     }

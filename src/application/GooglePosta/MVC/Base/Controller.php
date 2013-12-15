@@ -134,7 +134,7 @@ abstract class Controller extends \MVC\Controller
     protected function redirect($url)
     {
         if ($this->config->get('debug.header_location')) {
-            $this->view->setContent('<a href="' . $url . '" target="_blank">follow location header</a>');
+            $this->view->setContent('<a href="' . $url . '">follow location header</a>');
 
             return $this;
         }

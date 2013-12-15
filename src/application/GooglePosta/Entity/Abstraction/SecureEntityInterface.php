@@ -10,19 +10,24 @@ interface SecureEntityInterface
      * Encode all values of the entity using the provided cryptograph
      *
      * @param CryptographInterface $cryptograph
-     * @param array                $ignore List of keys to ignore
      *
      * @return SecureEntityInterface
      */
-    public function encode(CryptographInterface $cryptograph, array $ignore = array());
+    public function encode(CryptographInterface $cryptograph);
 
     /**
      * Decode all values of the entity using the provided cryptograph
      *
      * @param CryptographInterface $cryptograph
-     * @param array                $ignore List of keys to ignore
      *
      * @return SecureEntityInterface
      */
-    public function decode(CryptographInterface $cryptograph, array $ignore = array());
+    public function decode(CryptographInterface $cryptograph);
+
+    /**
+     * Return a list of properties to skip/ignore when encoding/decoding.
+     *
+     * @return array
+     */
+    public function ignore();
 } 

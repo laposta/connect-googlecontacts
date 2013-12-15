@@ -143,6 +143,19 @@ class Bootstrap
         $config          = $this->getConfig();
 
         /*
+         * Set the default classes for LoggerInterface and logger AdapterInterface
+         */
+        $this->dm->implement('Logger\Adapter\Abstraction\AdapterInterface', 'Logger\Adapter\File');
+        $this->dm->implement('Logger\Abstraction\LoggerInterface', 'Logger\Logger');
+        $this->dm->describe(
+            'Logger\Logger',
+            array(
+                $config->get('debug.log_level'),
+                $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
+            )
+        );
+
+        /*
          * Set the default class for DependencyContainerInterface dependencies
          */
         $this->dm->implement(

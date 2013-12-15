@@ -128,8 +128,8 @@ class Authority extends Controller
         $tokens = $this->model->getGoogleTokens($googleAuthCode);
 
         $clientData                     = $this->model->getClientData();
-        $clientData->googleAccessToken  = $tokens['access'];
-        $clientData->googleRefreshToken = $tokens['refresh'];
+        $clientData->googleTokenSet     = $tokens;
+        $clientData->googleRefreshToken = $tokens['refresh_token'];
 
         $this->model->persist();
 
