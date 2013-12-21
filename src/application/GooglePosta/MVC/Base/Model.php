@@ -4,13 +4,14 @@ namespace GooglePosta\MVC\Base;
 
 use Command\CommandFactory;
 use GooglePosta\Command\CreateClientToken;
+use RuntimeException;
 
 class Model extends \MVC\Model
 {
     /**
      * @var CommandFactory
      */
-    protected $commandFactory;
+    private $commandFactory;
 
     /**
      * Constructor override.
@@ -19,16 +20,7 @@ class Model extends \MVC\Model
      */
     public function __construct(CommandFactory $commandFactory)
     {
-        parent::__construct();
-
         $this->commandFactory = $commandFactory;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function persist()
-    {
     }
 
     /**
@@ -36,12 +28,54 @@ class Model extends \MVC\Model
      *
      * @return string
      */
-    public function createClientToken($email)
+    protected function createClientToken($email)
     {
         /** @var $command CreateClientToken */
-        $command = $this->commandFactory->create('GooglePosta\Command\CreateClientToken');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\CreateClientToken');
         $command->setIdentifier($email)->execute();
 
         return $command->getClientToken();
+    }
+
+    /**
+     * Validate an email address.
+     *
+     * @param string $email
+     *
+     * @return $this
+     * @throws \RuntimeException
+     */
+    protected function validateEmail($email)
+    {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException("Expected a valid email address. Given '$email' is not valid.");
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $url
+     *
+     * @return $this
+     * @throws \RuntimeException
+     */
+    protected function validateUrl($url)
+    {
+        if (filter_var($url, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException("Expected a valid URL. Given '$url' is not valid.");
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get the command factory
+     *
+     * @return \Command\CommandFactory
+     */
+    protected function getCommandFactory()
+    {
+        return $this->commandFactory;
     }
 }

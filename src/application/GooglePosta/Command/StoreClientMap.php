@@ -6,6 +6,7 @@ use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
+use GooglePosta\Entity\ListMap;
 use RuntimeException;
 
 class StoreClientMap extends AbstractCommand
@@ -26,7 +27,7 @@ class StoreClientMap extends AbstractCommand
     private $dataStore;
 
     /**
-     * @var array
+     * @var ListMap
      */
     private $map;
 
@@ -41,7 +42,7 @@ class StoreClientMap extends AbstractCommand
     }
 
     /**
-     * @param array $map
+     * @param ListMap $map
      *
      * @return StoreClientMap
      */
@@ -89,7 +90,8 @@ class StoreClientMap extends AbstractCommand
             return $this;
         }
 
-        $this->dataStore->setContent($this->map);
+        $this->dataStore->setContent($this->map->toArray());
+
         $this->dataStore->persist(
             new File($this->config->get('path.data') . '/maps/' . $this->clientToken . '.php')
         );

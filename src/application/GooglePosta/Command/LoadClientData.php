@@ -52,7 +52,7 @@ class LoadClientData extends AbstractCommand
     }
 
     /**
-     * @return \GooglePosta\Entity\ClientData
+     * @return ClientData
      */
     public function getClientData()
     {
@@ -93,7 +93,11 @@ class LoadClientData extends AbstractCommand
         }
 
         $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
-        $this->clientData->fromArray($this->dataStore->hasContent() ? $this->dataStore->getContent() : array());
+
+        if ($this->dataStore->hasContent()) {
+            $this->clientData->fromArray($this->dataStore->getContent());
+        }
+
         $this->clientData->decode($this->crypto);
 
         return $this;

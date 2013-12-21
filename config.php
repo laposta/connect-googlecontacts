@@ -23,17 +23,25 @@ use Logger\Abstraction\LogLevel;
 
 return array(
     /*
-     * Timezone to be used for the application
-     */
-    'timezone'    => 'Europe/Amsterdam',
-    /*
      * The applications environment.
      */
-    'environment' => 'production',
+    'environment'  => 'production',
+    /*
+     * Timezone to be used for the application
+     */
+    'timezone'     => 'Europe/Amsterdam',
+    /*
+     * Set the allowed memory limit for the application
+     */
+    'memory_limit' => '512M',
+    /*
+     * Set the default time limit
+     */
+    'time_limit' => 0,
     /*
      * Debug settings
      */
-    'debug'       => array(
+    'debug'        => array(
         /*
          * Print a link to the location header instead of setting the location header.
          */
@@ -50,7 +58,7 @@ return array(
     /*
      * Application paths
      */
-    'path'        => array(
+    'path'         => array(
         /*
          * Path the application root.
          */
@@ -71,15 +79,33 @@ return array(
     /*
      * Configuration settings for access to Google APIs.
      */
-    'google'      => array(
+    'google'       => array(
+        /*
+         * Client secret from google cloud console.
+         */
         'client_secret' => 'PH9keaXHD0rDDgAV1qSpy_E-',
+        /*
+         * Client id from google cloud console.
+         */
         'client_id'     => '915139937104-frrse699unjsdkmr30kmsvboi1g5hghm.apps.googleusercontent.com',
+        /*
+         * The url google will return to after consent screen
+         */
         'return_url'    => 'https://dev01.laposta-infra.nl/authority/',
+        /*
+         * The google api scopes being used by this application.
+         */
+        'scopes'        => array(
+            /*
+             * Google Contacts
+             */
+            'https://www.google.com/m8/feeds/',
+        ),
     ),
     /*
      * Security related settings.
      */
-    'security'    => array(
+    'security'     => array(
         /*
          * Use https when generating urls for this application.
          */
@@ -88,5 +114,15 @@ return array(
          * Key to use for data encryption.
          */
         'encryption_key' => 'WPOzabpK2V2JGm70Hr091Nl2IUTyD2SgM98fNZEy',
+    ),
+    /*
+     * Settings for the synchronisation process
+     */
+    'sync'         => array(
+        /*
+         * Allow Google default system groups (i.e. My Contacts, Friends, Family, Coworkers) to
+         * be imported. If 'false' only custom (user created) groups will be imported.
+         */
+        'allow_system_groups' => false,
     ),
 );

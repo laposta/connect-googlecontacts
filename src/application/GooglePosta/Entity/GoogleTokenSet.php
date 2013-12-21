@@ -34,7 +34,7 @@ class GoogleTokenSet extends SecureEntity
     /**
      * @inheritdoc
      */
-    public function ignore()
+    protected function ignore()
     {
         return array('token_type', 'expires_in', 'created');
     }

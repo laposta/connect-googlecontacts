@@ -10,6 +10,7 @@ use GooglePosta\Command\PurgeClientData;
 use GooglePosta\Command\StoreClientData;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\MVC\Base\Model;
+use RuntimeException;
 use Session\Session;
 
 class Authority extends Model
@@ -30,48 +31,6 @@ class Authority extends Model
     private $clientData;
 
     /**
-     * @param \GooglePosta\Entity\ClientData $clientData
-     *
-     * @return Authority
-     */
-    public function setClientData(ClientData $clientData)
-    {
-        $this->clientData = $clientData;
-
-        return $this;
-    }
-
-    /**
-     * @return \GooglePosta\Entity\ClientData
-     */
-    public function getClientData()
-    {
-        $this->loadClientData();
-
-        return $this->clientData;
-    }
-
-    /**
-     * @param string $clientToken
-     *
-     * @return Authority
-     */
-    public function setClientToken($clientToken)
-    {
-        $this->clientToken = $clientToken;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClientToken()
-    {
-        return $this->clientToken;
-    }
-
-    /**
      * Constructor override
      *
      * @param CommandFactory $commandFactory
@@ -88,6 +47,101 @@ class Authority extends Model
     }
 
     /**
+     * Confirm authority with google with provided auth code.
+     *
+     * @param string $googleAuthCode
+     *
+     * @return Authority
+     */
+    public function confirmAuthority($googleAuthCode)
+    {
+        /** @var $command ConfirmApiBridge */
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\ConfirmApiBridge');
+        $command->setAuthCode($googleAuthCode)->execute();
+
+        $this->clientData->googleTokenSet     = $command->getTokens();
+        $this->clientData->googleRefreshToken = $this->clientData->googleTokenSet->refresh_token;
+
+        return $this->persist();
+    }
+
+    /**
+     * Get the clients return url
+     *
+     * @return string
+     */
+    public function getClientReturnUrl()
+    {
+        return $this->clientData->returnUrl;
+    }
+
+    /**
+     * Initiate the authority request with google
+     *
+     * @param string $email     Laposta account email
+     * @param string $apiToken  Laposta API token
+     * @param string $returnUrl URL for redirects back to Laposta
+     *
+     * @return string The google OAuth URL to redirect to.
+     */
+    public function initiate($email, $apiToken, $returnUrl)
+    {
+        $email     = filter_var($email, FILTER_SANITIZE_EMAIL);
+        $apiToken  = filter_var($apiToken, FILTER_SANITIZE_STRING);
+        $returnUrl = filter_var($returnUrl, FILTER_SANITIZE_URL);
+
+        $this->validateEmail($email);
+        $this->validateUrl($returnUrl);
+
+        $this->clientToken = $this->createClientToken($email);
+
+        $this->loadClientData();
+
+        $this->clientData->email           = $email;
+        $this->clientData->lapostaApiToken = $apiToken;
+        $this->clientData->returnUrl       = $returnUrl;
+
+        $this->persist();
+
+        /** @var $command InitializeApiBridge */
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\InitializeApiBridge');
+        $command->execute();
+
+        return $command->getRedirectUrl();
+    }
+
+    /**
+     * Purge a stored authority for the provided email / apiToken
+     *
+     * @param string $email    Laposta account email
+     * @param string $apiToken Laposta API token
+     *
+     * @return Authority
+     * @throws RuntimeException
+     */
+    public function purgeAuthority($email, $apiToken)
+    {
+        $email    = filter_var($email, FILTER_SANITIZE_EMAIL);
+        $apiToken = filter_var($apiToken, FILTER_SANITIZE_STRING);
+
+        $this->validateEmail($email);
+
+        $this->clientToken = $this->createClientToken($email);
+
+        $this->loadClientData();
+
+        if ($this->clientData->lapostaApiToken !== $apiToken) {
+            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
+        }
+
+        /** @var $command PurgeClientData */
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\PurgeClientData');
+        $command->setClientToken($this->clientToken)->execute();
+
+        return $this;
+    }
+
+    /**
      * @return Authority
      */
     protected function loadClientData()
@@ -97,7 +151,7 @@ class Authority extends Model
         }
 
         /** @var $command LoadClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\LoadClientData');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\LoadClientData');
         $command->setClientToken($this->clientToken)->execute();
 
         $this->clientData = $command->getClientData();
@@ -110,61 +164,14 @@ class Authority extends Model
      *
      * @return Authority
      */
-    public function persist()
+    protected function persist()
     {
         $this->session->set('client.token', $this->clientToken);
-        $this->storeClientData();
 
-        return $this;
-    }
-
-    /**
-     * @return Authority
-     */
-    protected function storeClientData()
-    {
         /** @var $command StoreClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\StoreClientData');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\StoreClientData');
         $command->setClientToken($this->clientToken)->setClientData($this->clientData)->execute();
 
         return $this;
-    }
-
-    /**
-     * @return Authority
-     */
-    public function purgeClientData()
-    {
-        /** @var $command PurgeClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\PurgeClientData');
-        $command->setClientToken($this->clientToken)->execute();
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getGoogleAuthUrl()
-    {
-        /** @var $command InitializeApiBridge */
-        $command = $this->commandFactory->create('GooglePosta\Command\InitializeApiBridge');
-        $command->execute();
-
-        return $command->getRedirectUrl();
-    }
-
-    /**
-     * @param $googleAuthCode
-     *
-     * @return array array('access' => '', 'refresh' => '');
-     */
-    public function getGoogleTokens($googleAuthCode)
-    {
-        /** @var $command ConfirmApiBridge */
-        $command = $this->commandFactory->create('GooglePosta\Command\ConfirmApiBridge');
-        $command->setAuthCode($googleAuthCode)->execute();
-
-        return $command->getTokens();
     }
 }

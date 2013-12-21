@@ -2,22 +2,35 @@
 
 namespace GooglePosta\Command\Sync;
 
+use ApiAdapter\Contacts\Entity\Collection\Contacts;
+use ApiAdapter\Contacts\Entity\Collection\Groups;
+use ApiAdapter\Contacts\Google;
+use ApiAdapter\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
-use Entity\Abstraction\SortableInterface;
-use Google_Client;
+use Config\Config;
 use GooglePosta\Entity\ClientData;
-use Laposta;
+use GooglePosta\Entity\ListMap;
 
 class SyncGoogle extends AbstractCommand
 {
     /**
-     * @var Google_Client
+     * @var Config
      */
-    private $client;
+    private $config;
 
     /**
-     * @var array
+     * @var Google
+     */
+    private $google;
+
+    /**
+     * @var Laposta
+     */
+    private $laposta;
+
+    /**
+     * @var ListMap
      */
     private $listMap;
 
@@ -32,18 +45,21 @@ class SyncGoogle extends AbstractCommand
     private $clientData;
 
     /**
-     * @param Google_Client $client
+     * @param Google  $google
+     * @param Laposta $laposta
+     * @param Config  $config
      */
-    function __construct(Google_Client $client)
+    function __construct(Google $google, Laposta $laposta, Config $config)
     {
-        $this->client = $client;
+        $this->config = $config;
+        $this->google = $google;
+        $this->laposta = $laposta;
     }
 
     /**
      * @param string $apiToken
-
      *
-*@return SyncGoogle
+     * @return SyncGoogle
      */
     public function setApiToken($apiToken)
     {
@@ -61,12 +77,11 @@ class SyncGoogle extends AbstractCommand
     }
 
     /**
-     * @param array $listMap
-
+     * @param ListMap $listMap
      *
-*@return SyncGoogle
+     * @return SyncGoogle
      */
-    public function setListMap($listMap)
+    public function setListMap(ListMap $listMap)
     {
         $this->listMap = $listMap;
 
@@ -74,7 +89,7 @@ class SyncGoogle extends AbstractCommand
     }
 
     /**
-     * @return array
+     * @return ListMap
      */
     public function getListMap()
     {
@@ -101,6 +116,16 @@ class SyncGoogle extends AbstractCommand
         return $this->clientData;
     }
 
+    protected function synchronizeGroups(Groups $groups)
+    {
+//        $groups->dump();
+    }
+
+    protected function synchronizeContacts(Contacts $contacts)
+    {
+//        $contacts->dump();
+    }
+
     /**
      * Execute the command
      *
@@ -108,76 +133,22 @@ class SyncGoogle extends AbstractCommand
      */
     public function execute()
     {
-        //Laposta::setApiKey($this->apiToken);
+        $this->clientData->googleTokenSet->refresh_token = $this->clientData->googleRefreshToken;
 
-        $this->client->setScopes('https://www.google.com/m8/feeds/');
-        $this->client->setAccessToken(json_encode($this->clientData->googleTokenSet->toArray()));
+        $this->clientData->googleTokenSet->fromArray(
+            $this->google->setAccessToken($this->clientData->googleTokenSet)
+        );
 
-        if ($this->client->isAccessTokenExpired()) {
-            $this->client->refreshToken($this->clientData->googleRefreshToken);
-            $this->clientData->googleTokenSet = json_decode($this->client->getAccessToken(), true);
+        while ($this->google->hasMoreGroups()) {
+            $this->synchronizeGroups($this->google->getGroups());
+
+            break; // TODO(mertenvg): remove break
         }
 
-        $url = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json';
+        while ($this->google->hasMoreContacts()) {
+            $this->synchronizeContacts($this->google->getContacts());
 
-
-        $request = new \Google_Http_Request($this->client, $url, 'GET', array('GData-Version' => '3.0'));
-        $this->client->getAuth()->sign($request);
-        $response = $request->execute();
-
-
-        echo $this->printData($response);
-    }
-
-    /**
-     * Travers a data structure printing it's contents and path
-     *
-     * @param mixed  $data
-     * @param string $prefix
-     * @param bool   $wrap
-     *
-     * @return string
-     */
-    public function printData(&$data, $prefix = '', $wrap = true) {
-        $out = '';
-
-        if ($wrap === true) {
-            $out .= '<pre style="margin: 10px;">';
+            break; // TODO(mertenvg): remove break
         }
-
-        if (is_bool($data)) {
-            $data = $data ? 'true' : 'false';
-            $out .= "<span style=\"color:#090;\">$prefix</span> = <span style=\"color:#909;\">$data</span>\n";
-        }
-        else if (is_int($data)) {
-            $out .= "<span style=\"color:#090;\">$prefix</span> = <span style=\"color:#009;\">$data</span>\n";
-        }
-        else if (empty($data)) {
-            $out .= "<span style=\"color:#090;\">$prefix</span> = <span style=\"color:#999;\">empty</span>\n";
-        }
-        else if ((!is_array($data) && !($data instanceof \Traversable))) {
-            $out .= "<span style=\"color:#090;\">$prefix</span> = <span style=\"color:#900;\">'$data'</span>\n";
-        }
-        else {
-            if ($data instanceof \ArrayIterator) {
-                $data->ksort();
-            }
-            else if ($data instanceof SortableInterface) {
-                $data->ksort();
-            }
-            else if (is_array($data)) {
-                ksort($data);
-            }
-
-            foreach ($data as $key => $value) {
-                $out .= $this->printData($value, trim("$prefix.$key", '.'), false);
-            }
-        }
-
-        if ($wrap === true) {
-            $out .= '</pre>';
-        }
-
-        return $out;
     }
 }

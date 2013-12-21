@@ -131,7 +131,7 @@ class Bootstrap
     protected function initDependencies()
     {
         /*
-         * Set the default class for InjectorInterface dependencies
+         * Set the class for InjectorInterface dependencies
          */
         $this->dm->implement(
             'Depend\Abstraction\InjectorInterface',
@@ -143,7 +143,7 @@ class Bootstrap
         $config          = $this->getConfig();
 
         /*
-         * Set the default classes for LoggerInterface and logger AdapterInterface
+         * Set the classes for LoggerInterface and logger AdapterInterface
          */
         $this->dm->implement('Logger\Adapter\Abstraction\AdapterInterface', 'Logger\Adapter\File');
         $this->dm->implement('Logger\Abstraction\LoggerInterface', 'Logger\Logger');
@@ -156,7 +156,7 @@ class Bootstrap
         );
 
         /*
-         * Set the default class for DependencyContainerInterface dependencies
+         * Set the class for DependencyContainerInterface dependencies
          */
         $this->dm->implement(
             'Web\Route\Abstraction\DependencyContainerInterface',
@@ -164,7 +164,7 @@ class Bootstrap
         );
 
         /*
-         * Set default parameters for the Path\Resolver class
+         * Set parameters for the Path\Resolver class
          */
         $this->dm->describe(
             'Path\Resolver',
@@ -177,7 +177,7 @@ class Bootstrap
         );
 
         /*
-         * Set default parameters for the Security\Cryptograph class
+         * Set parameters for the Security\Cryptograph class
          */
         $this->dm->describe(
             'Security\Cryptograph',
@@ -196,6 +196,7 @@ class Bootstrap
                 $injectorFactory->create('setClientId', $config->get('google.client_id')),
                 $injectorFactory->create('setClientSecret', $config->get('google.client_secret')),
                 $injectorFactory->create('setRedirectUri', $config->get('google.return_url')),
+                $injectorFactory->create('setScopes', $config->get('google.scopes')),
             )
         );
     }
@@ -208,5 +209,7 @@ class Bootstrap
         $config = $this->getConfig();
 
         date_default_timezone_set($config->get('timezone'));
+        ini_set('memory_limit', $config->get('memory_limit'));
+        set_time_limit($config->get('time_limit'));
     }
 }

@@ -7,6 +7,7 @@ use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
 use GooglePosta\Entity\ClientData;
+use GooglePosta\Entity\ListMap;
 use RuntimeException;
 
 class LoadClientMap extends AbstractCommand
@@ -27,23 +28,24 @@ class LoadClientMap extends AbstractCommand
     private $dataStore;
 
     /**
-     * @var array
+     * @var ListMap
      */
-    private $map = array();
+    private $map;
 
     /**
-     * @param Config      $config
-     * @param DataStore   $dataStore
+     * @param Config    $config
+     * @param DataStore $dataStore
      */
     function __construct(Config $config, DataStore $dataStore)
     {
         $this->config     = $config;
         $this->dataStore  = $dataStore;
         $this->clientData = new ClientData();
+        $this->map        = new ListMap();
     }
 
     /**
-     * @return array
+     * @return ListMap
      */
     public function getMap()
     {
@@ -53,7 +55,7 @@ class LoadClientMap extends AbstractCommand
     /**
      * @param string $clientToken
      *
-     * @return LoadClientData
+     * @return LoadClientMap
      */
     public function setClientToken($clientToken)
     {
@@ -74,7 +76,6 @@ class LoadClientMap extends AbstractCommand
      * Execute the command
      *
      * @return LoadClientMap
-     *
      * @throws \RuntimeException
      */
     public function execute()
@@ -86,7 +87,10 @@ class LoadClientMap extends AbstractCommand
         $this->dataStore->retrieve(
             new File($this->config->get('path.data') . '/mappings/' . $this->clientToken . '.php')
         );
-        $this->map = $this->dataStore->hasContent() ? $this->dataStore->getContent() : array();
+
+        if ($this->dataStore->hasContent()) {
+            $this->map->fromArray($this->dataStore->getContent());
+        }
 
         return $this;
     }

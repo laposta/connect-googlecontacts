@@ -5,12 +5,12 @@ namespace Logger;
 use Logger\Abstraction\AbstractLogger;
 use Logger\Abstraction\LoggerInterface;
 
-class Queue extends AbstractLogger
+class Collection extends AbstractLogger
 {
     /**
      * @var \SplObjectStorage
      */
-    private $queue;
+    private $collection;
 
     /**
      * Logs with an arbitrary level.
@@ -23,10 +23,10 @@ class Queue extends AbstractLogger
      */
     public function log($level, $message, $context = array())
     {
-        $this->queue->rewind();
+        $this->collection->rewind();
 
-        /** @var $logger LoggerInterface */
-        foreach ($this->queue as $logger) {
+        foreach ($this->collection as $logger) {
+            /** @var $logger LoggerInterface */
             $logger->log($level, $message, $context);
         }
     }
@@ -38,7 +38,7 @@ class Queue extends AbstractLogger
      */
     public function add(LoggerInterface $logger)
     {
-        $this->queue->attach($logger);
+        $this->collection->attach($logger);
     }
 
     /**
@@ -46,6 +46,6 @@ class Queue extends AbstractLogger
      */
     public function remove(LoggerInterface $logger)
     {
-        $this->queue->detach($logger);
+        $this->collection->detach($logger);
     }
 }

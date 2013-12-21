@@ -23,11 +23,4 @@ interface SecureEntityInterface
      * @return SecureEntityInterface
      */
     public function decode(CryptographInterface $cryptograph);
-
-    /**
-     * Return a list of properties to skip/ignore when encoding/decoding.
-     *
-     * @return array
-     */
-    public function ignore();
-} 
+}

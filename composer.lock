@@ -7,16 +7,16 @@
     "packages": [
         {
             "name": "codeblanche/depend",
-            "version": "1.0.4",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Depend.git",
-                "reference": "6ec8d6282e6d5b577d806dd384008e90ff1a1c36"
+                "reference": "69dde0b25fc19a1a322e830b1943d604c4bcdb35"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/6ec8d6282e6d5b577d806dd384008e90ff1a1c36",
-                "reference": "6ec8d6282e6d5b577d806dd384008e90ff1a1c36",
+                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/69dde0b25fc19a1a322e830b1943d604c4bcdb35",
+                "reference": "69dde0b25fc19a1a322e830b1943d604c4bcdb35",
                 "shasum": ""
             },
             "require": {
@@ -49,7 +49,7 @@
                 "injection",
                 "php"
             ],
-            "time": "2013-12-06 12:49:00"
+            "time": "2013-12-19 00:43:02"
         },
         {
             "name": "codeblanche/entity",
@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/google/google-api-php-client.git",
-                "reference": "b8d0584604d7a9df9033dfa08e765ee36a3deafb"
+                "reference": "d2d65826199336a68deab6673f915cee3fc6d1e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/b8d0584604d7a9df9033dfa08e765ee36a3deafb",
-                "reference": "b8d0584604d7a9df9033dfa08e765ee36a3deafb",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/d2d65826199336a68deab6673f915cee3fc6d1e6",
+                "reference": "d2d65826199336a68deab6673f915cee3fc6d1e6",
                 "shasum": ""
             },
             "require": {
@@ -180,7 +180,7 @@
             "keywords": [
                 "google"
             ],
-            "time": "2013-12-14 04:18:16"
+            "time": "2013-12-18 04:21:31"
         },
         {
             "name": "laposta/laposta-api-php",

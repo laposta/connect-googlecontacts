@@ -9,6 +9,7 @@ use GooglePosta\Command\StoreClientMap;
 use GooglePosta\Command\Sync\SyncGoogle;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\MVC\Base\Model;
+use RuntimeException;
 
 class Sync extends Model
 {
@@ -28,67 +29,29 @@ class Sync extends Model
     private $clientToken;
 
     /**
-     * @param \GooglePosta\Entity\ClientData $clientData
+     * Import contacts from google.
      *
-     * @return Sync
+     * @param string $email    Laposta account email
+     * @param string $apiToken Laposta API token
+     *
+     * @return $this
+     * @throws \RuntimeException
      */
-    public function setClientData($clientData)
+    public function importFromGoogle($email, $apiToken)
     {
-        $this->clientData = $clientData;
+        $this->clientToken = $this->createClientToken($email);
 
-        return $this;
-    }
-
-    /**
-     * @return \GooglePosta\Entity\ClientData
-     */
-    public function getClientData()
-    {
         $this->loadClientData();
 
-        return $this->clientData;
-    }
+        if ($this->clientData->lapostaApiToken !== $apiToken) {
+            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
+        }
 
-    /**
-     * @param array $clientMap
-     *
-     * @return Sync
-     */
-    public function setClientMap($clientMap)
-    {
-        $this->clientMap = $clientMap;
+        /** @var $command SyncGoogle */
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\Sync\SyncGoogle');
+        $command->setClientData($this->clientData)->execute();
 
         return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getClientMap()
-    {
-        $this->loadClientMap();
-
-        return $this->clientMap;
-    }
-
-    /**
-     * @param string $clientToken
-     *
-     * @return Sync
-     */
-    public function setClientToken($clientToken)
-    {
-        $this->clientToken = $clientToken;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClientToken()
-    {
-        return $this->clientToken;
     }
 
     /**
@@ -101,7 +64,7 @@ class Sync extends Model
         }
 
         /** @var $command LoadClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\LoadClientData');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\LoadClientData');
         $command->setClientToken($this->clientToken)->execute();
 
         $this->clientData = $command->getClientData();
@@ -119,7 +82,7 @@ class Sync extends Model
         }
 
         /** @var $command LoadClientMap */
-        $command = $this->commandFactory->create('GooglePosta\Command\LoadClientMap');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\LoadClientMap');
         $command->setClientToken($this->clientToken)->execute();
 
         $this->clientMap = $command->getMap();
@@ -132,43 +95,15 @@ class Sync extends Model
      *
      * @return Sync
      */
-    public function persist()
-    {
-        $this->storeClientData();
-        $this->storeClientMap();
-
-        return $this;
-    }
-
-    /**
-     * @return Sync
-     */
-    protected function storeClientData()
+    protected function persist()
     {
         /** @var $command StoreClientData */
-        $command = $this->commandFactory->create('GooglePosta\Command\StoreClientData');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\StoreClientData');
         $command->setClientToken($this->clientToken)->setClientData($this->clientData)->execute();
 
-        return $this;
-    }
-
-    /**
-     * @return Sync
-     */
-    protected function storeClientMap()
-    {
         /** @var $command StoreClientMap */
-        $command = $this->commandFactory->create('GooglePosta\Command\StoreClientMap');
+        $command = $this->getCommandFactory()->create('GooglePosta\Command\StoreClientMap');
         $command->setClientToken($this->clientToken)->setMap($this->clientMap)->execute();
-
-        return $this;
-    }
-
-    public function syncGoogle()
-    {
-        /** @var $command SyncGoogle */
-        $command = $this->commandFactory->create('GooglePosta\Command\Sync\SyncGoogle');
-        $command->setClientData($this->getClientData())->execute();
 
         return $this;
     }

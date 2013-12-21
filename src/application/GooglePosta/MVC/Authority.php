@@ -7,7 +7,6 @@ use GooglePosta\MVC\Base\Controller;
 use GooglePosta\MVC\Base\View;
 use GooglePosta\MVC\Model\Authority as AuthorityModel;
 use Path\Resolver;
-use Web\Exception\RuntimeException;
 use Web\Response\Status;
 use Web\Web;
 
@@ -45,15 +44,14 @@ class Authority extends Controller
     public function run($params = array())
     {
         $requestMethod  = strtoupper($this->request->server('REQUEST_METHOD'));
-        $googleAuthCode = filter_var($this->request->get('code'), FILTER_SANITIZE_STRING);
         $action         = '';
 
-        if (!empty($params['action'])) {
-            $action = strtoupper(filter_var($params['action'], FILTER_SANITIZE_STRING));
+        if (isset($params['action'])) {
+            $action = strtoupper($params['action']);
         }
 
-        if (!empty($googleAuthCode)) {
-            $this->confirmAuthority($googleAuthCode);
+        if (!is_empty($this->request->get('code'))) {
+            $this->confirmAuthority();
         }
         elseif ($requestMethod === 'DELETE' || $action === 'DELETE') {
             $this->purgeAuthority();
@@ -71,17 +69,12 @@ class Authority extends Controller
      */
     protected function purgeAuthority()
     {
-        $email     = $this->getValidatedEmail();
-        $apiToken  = $this->getValidatedApiToken();
-        $returnUrl = $this->getValidatedReturnUrl();
+        $this->model->purgeAuthority(
+            $this->request->post('email'),
+            $this->request->post('lapostaApiToken')
+        );
 
-        $this->model->setClientToken($this->model->createClientToken($email));
-
-        if ($this->model->getClientData()->lapostaApiToken !== $apiToken) {
-            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
-        }
-
-        $this->model->purgeClientData();
+        $returnUrl = $this->request->post('returnUrl');
 
         if (!empty($returnUrl)) {
             $this->redirect($returnUrl);
@@ -96,20 +89,11 @@ class Authority extends Controller
      */
     protected function initAuthority()
     {
-        $email     = $this->getValidatedEmail();
-        $apiToken  = $this->getValidatedApiToken();
-        $returnUrl = $this->getValidatedReturnUrl();
-
-        $this->model->setClientToken($this->model->createClientToken($email));
-
-        $clientData                  = $this->model->getClientData();
-        $clientData->email           = $email;
-        $clientData->lapostaApiToken = $apiToken;
-        $clientData->returnUrl       = $returnUrl;
-
-        $this->model->persist();
-
-        $redirect = $this->model->getGoogleAuthUrl();
+        $redirect = $this->model->initiate(
+            $this->request->post('email'),
+            $this->request->post('lapostaApiToken'),
+            $this->request->post('returnUrl')
+        );
 
         if (!empty($redirect)) {
             $this->redirect($redirect);
@@ -119,21 +103,13 @@ class Authority extends Controller
     }
 
     /**
-     * @param string $googleAuthCode
-     *
      * @return Authority
      */
-    protected function confirmAuthority($googleAuthCode)
+    protected function confirmAuthority()
     {
-        $tokens = $this->model->getGoogleTokens($googleAuthCode);
+        $this->model->confirmAuthority($this->request->get('code'));
 
-        $clientData                     = $this->model->getClientData();
-        $clientData->googleTokenSet     = $tokens;
-        $clientData->googleRefreshToken = $tokens['refresh_token'];
-
-        $this->model->persist();
-
-        $redirect = $clientData->returnUrl;
+        $redirect = $this->model->getClientReturnUrl();
 
         if (!empty($redirect)) {
             $this->redirect($redirect);

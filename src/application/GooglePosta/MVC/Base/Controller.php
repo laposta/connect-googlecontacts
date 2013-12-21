@@ -133,6 +133,12 @@ abstract class Controller extends \MVC\Controller
      */
     protected function redirect($url)
     {
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return $this;
+        }
+
+        $url = filter_var($url, FILTER_SANITIZE_URL);
+
         if ($this->config->get('debug.header_location')) {
             $this->view->setContent('<a href="' . $url . '">follow location header</a>');
 

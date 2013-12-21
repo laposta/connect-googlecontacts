@@ -52,9 +52,11 @@ class SecureEntity extends Entity implements SecureEntityInterface
     }
 
     /**
-     * @inheritdoc
+     * Return a list of properties to skip/ignore when encoding/decoding.
+     *
+     * @return array
      */
-    public function ignore()
+    protected function ignore()
     {
         return array();
     }

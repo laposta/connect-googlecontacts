@@ -39,7 +39,7 @@ class ClientData extends SecureEntity
     /**
      * @inheritdoc
      */
-    public function ignore()
+    protected function ignore()
     {
         return array('returnUrl', 'lastUpdate');
     }

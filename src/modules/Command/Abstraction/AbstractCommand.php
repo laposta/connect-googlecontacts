@@ -10,7 +10,7 @@ abstract class AbstractCommand implements CommandInterface, LoggerAwareInterface
     /**
      * @var LoggerInterface
      */
-    protected $log;
+    protected $logger;
 
     /**
      * Sets a logger instance on the object
@@ -19,6 +19,6 @@ abstract class AbstractCommand implements CommandInterface, LoggerAwareInterface
      */
     public function setLogger(LoggerInterface $logger)
     {
-        $this->log = $logger;
+        $this->logger = $logger;
     }
 }

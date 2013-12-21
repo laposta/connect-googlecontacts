@@ -5,9 +5,14 @@ namespace Config;
 use InvalidArgumentException;
 use RuntimeException;
 
+/**
+ * Class Config
+ * Decorates the \Iterator\ArrayPathIterator to allow path based config array navigation.
+ *
+ * @package Config
+ */
 class Config
 {
-
     /**
      * @var array
      */

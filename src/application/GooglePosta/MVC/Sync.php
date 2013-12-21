@@ -47,8 +47,8 @@ class Sync extends Controller
     {
         $action = '';
 
-        if (!empty($params['action'])) {
-            $action = strtoupper(filter_var($params['action'], FILTER_SANITIZE_STRING));
+        if (isset($params['action'])) {
+            $action = strtoupper($params['action']);
         }
 
         if ($action === 'IMPORT') {
@@ -70,23 +70,12 @@ class Sync extends Controller
      */
     protected function importFromGoogle()
     {
-        $email     = $this->getValidatedEmail();
-        $apiToken  = $this->getValidatedApiToken();
-        $returnUrl = $this->getValidatedReturnUrl();
+        $this->model->importFromGoogle(
+            $this->request->post('email'),
+            $this->request->post('lapostaApiToken')
+        );
 
-        $this->model->setClientToken($this->model->createClientToken($email));
-
-        if ($this->model->getClientData()->lapostaApiToken !== $apiToken) {
-            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
-        }
-
-        $this->model->syncGoogle();
-
-        // TODO : initiate synchronisation of contacts from Google
-
-        echo "Import from google";
-
-        return;
+        $returnUrl = $this->request->post('returnUrl');
 
         if (!empty($returnUrl)) {
             $this->redirect($returnUrl);
@@ -110,7 +99,7 @@ class Sync extends Controller
 
         $this->model->getClientData()->dump();
 
-        // TODO : process events.
+        // TODO(mertenvg): process events.
 
         $data = $this->request->put();
 

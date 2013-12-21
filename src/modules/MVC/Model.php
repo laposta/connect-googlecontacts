@@ -5,20 +5,6 @@ namespace MVC;
 use Entity\Entity;
 use ReflectionProperty;
 
-abstract class Model extends Entity
+abstract class Model
 {
-    /**
-     * @inheritdoc
-     */
-    protected function propertiesFilter()
-    {
-        return ReflectionProperty::IS_PUBLIC;
-    }
-
-    /**
-     * Persist changes to the model.
-     *
-     * @return Model
-     */
-    abstract public function persist();
 }

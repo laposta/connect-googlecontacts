@@ -44,11 +44,6 @@ class InitializeApiBridge extends AbstractCommand
 
         $client->setAccessType('offline');
         $client->setApprovalPrompt('force');
-        $client->setScopes(
-            array(
-                'https://www.google.com/m8/feeds',
-            )
-        );
 
         $this->redirectUrl = $client->createAuthUrl();
     }

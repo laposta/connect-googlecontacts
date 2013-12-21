@@ -23,7 +23,7 @@ class CommandFactory implements FactoryInterface
     /**
      * @var LoggerInterface
      */
-    private $log;
+    private $logger;
 
     /**
      * Default constructor
@@ -36,7 +36,7 @@ class CommandFactory implements FactoryInterface
     {
         $this->dependencyManager = $dependencyManager;
         $this->queuePrototype    = $queuePrototype;
-        $this->log               = $logger;
+        $this->logger            = $logger;
     }
 
     /**
@@ -52,7 +52,7 @@ class CommandFactory implements FactoryInterface
         $clone = clone $this->dependencyManager->get($className);
 
         if ($clone instanceof LoggerAwareInterface) {
-            $clone->setLogger($this->log);
+            $clone->setLogger($this->logger);
         }
 
         return $clone;
