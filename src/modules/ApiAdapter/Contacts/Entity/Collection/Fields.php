@@ -2,7 +2,8 @@
 
 namespace ApiAdapter\Contacts\Entity\Collection;
 
-use ApiAdapter\Contacts\Entity\Collection\Abstraction\AbstractEntityCollection;
+use ApiAdapter\Contacts\Abstraction\AbstractEntityCollection;
+use ApiAdapter\Contacts\Abstraction\FactoryInterface;
 use ApiAdapter\Contacts\Entity\Field;
 use InvalidArgumentException;
 
@@ -17,18 +18,20 @@ use InvalidArgumentException;
 class Fields extends AbstractEntityCollection
 {
     /**
-     * @var Field
+     * @var FactoryInterface
      */
-    private $fieldPrototype;
+    private $factory;
 
     /**
      * Constructor override
+     *
+     * @param FactoryInterface $factory
      */
-    public function __construct(Field $fieldPrototype)
+    public function __construct(FactoryInterface $factory)
     {
         parent::__construct();
 
-        $this->fieldPrototype = $fieldPrototype;
+        $this->factory = $factory;
     }
 
     /**
@@ -45,13 +48,11 @@ class Fields extends AbstractEntityCollection
             return $value;
         }
 
-        if (!is_traversable($value)) {
-            throw new InvalidArgumentException("Unable to convert '$value' to a Field");
+        if (!isset($value['type']) || !isset($value['value'])) {
+            throw new InvalidArgumentException("Unable to convert '$value' to a Field. Expected array('type'=>'','value'=>'').");
         }
 
-        $field = clone $this->fieldPrototype;
-
-        return $field->fromArray($value);
+        return $this->factory->createField($value['type'], $value['value']);
     }
 }
 

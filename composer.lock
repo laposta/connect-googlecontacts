@@ -7,16 +7,16 @@
     "packages": [
         {
             "name": "codeblanche/depend",
-            "version": "1.0.5",
+            "version": "1.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Depend.git",
-                "reference": "69dde0b25fc19a1a322e830b1943d604c4bcdb35"
+                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/69dde0b25fc19a1a322e830b1943d604c4bcdb35",
-                "reference": "69dde0b25fc19a1a322e830b1943d604c4bcdb35",
+                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/27f9a6f007027ddc94f6933967611601e0e443d3",
+                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3",
                 "shasum": ""
             },
             "require": {
@@ -49,20 +49,20 @@
                 "injection",
                 "php"
             ],
-            "time": "2013-12-19 00:43:02"
+            "time": "2013-12-22 14:27:16"
         },
         {
             "name": "codeblanche/entity",
-            "version": "1.4.1",
+            "version": "1.4.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Entity.git",
-                "reference": "21c573a3e74c5a9a716550d0ed954f4e30995ec4"
+                "reference": "4ac592d432587726c9147007d6239cd441c5b584"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Entity/zipball/21c573a3e74c5a9a716550d0ed954f4e30995ec4",
-                "reference": "21c573a3e74c5a9a716550d0ed954f4e30995ec4",
+                "url": "https://api.github.com/repos/CodeBlanche/Entity/zipball/4ac592d432587726c9147007d6239cd441c5b584",
+                "reference": "4ac592d432587726c9147007d6239cd441c5b584",
                 "shasum": ""
             },
             "require": {
@@ -94,7 +94,7 @@
                 "entity",
                 "php"
             ],
-            "time": "2013-12-11 13:08:20"
+            "time": "2013-12-22 19:25:35"
         },
         {
             "name": "codeblanche/web",
@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/google/google-api-php-client.git",
-                "reference": "d2d65826199336a68deab6673f915cee3fc6d1e6"
+                "reference": "b277cb5a7355ae33aa0678532284d438df48ad8f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/d2d65826199336a68deab6673f915cee3fc6d1e6",
-                "reference": "d2d65826199336a68deab6673f915cee3fc6d1e6",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/b277cb5a7355ae33aa0678532284d438df48ad8f",
+                "reference": "b277cb5a7355ae33aa0678532284d438df48ad8f",
                 "shasum": ""
             },
             "require": {
@@ -180,7 +180,7 @@
             "keywords": [
                 "google"
             ],
-            "time": "2013-12-18 04:21:31"
+            "time": "2013-12-21 04:24:18"
         },
         {
             "name": "laposta/laposta-api-php",

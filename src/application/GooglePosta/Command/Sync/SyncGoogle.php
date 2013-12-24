@@ -3,7 +3,11 @@
 namespace GooglePosta\Command\Sync;
 
 use ApiAdapter\Contacts\Entity\Collection\Contacts;
+use ApiAdapter\Contacts\Entity\Collection\Fields;
 use ApiAdapter\Contacts\Entity\Collection\Groups;
+use ApiAdapter\Contacts\Entity\Contact;
+use ApiAdapter\Contacts\Entity\Field;
+use ApiAdapter\Contacts\Entity\Group;
 use ApiAdapter\Contacts\Google;
 use ApiAdapter\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
@@ -11,6 +15,8 @@ use Command\Abstraction\CommandInterface;
 use Config\Config;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\Entity\ListMap;
+use GooglePosta\Entity\ListMapGroup;
+use Iterator\LinkedKeyIterator;
 
 class SyncGoogle extends AbstractCommand
 {
@@ -51,8 +57,8 @@ class SyncGoogle extends AbstractCommand
      */
     function __construct(Google $google, Laposta $laposta, Config $config)
     {
-        $this->config = $config;
-        $this->google = $google;
+        $this->config  = $config;
+        $this->google  = $google;
         $this->laposta = $laposta;
     }
 
@@ -116,14 +122,136 @@ class SyncGoogle extends AbstractCommand
         return $this->clientData;
     }
 
+    /**
+     * @param Groups $groups
+     */
     protected function synchronizeGroups(Groups $groups)
     {
-//        $groups->dump();
+        $this->logger->debug('Synchronizing groups');
+
+        /** @var $group Group */
+        foreach ($groups as $group) {
+            $lapId = null;
+
+            if (isset($this->listMap->groups[$group->gId])) {
+                $lapId = $this->listMap->groups[$group->gId];
+            }
+
+            if (empty($lapId)) {
+                $this->laposta->addGroup($group);
+
+                $this->logger->debug("Added new group '$group->title' with id '$group->lapId'");
+
+                $lapId = $group->lapId;
+            }
+            else {
+                $group->lapId = $lapId;
+
+                $this->laposta->updateGroup($group);
+
+                $this->logger->debug("Updated group '$group->title' with id '$group->lapId'");
+            }
+
+            $this->logger->debug("Group '{title}' with '{lapId}' is '{gId}'", $group);
+
+            $this->listMap->groups[$lapId] = $group->gId;
+
+            if (!isset($this->listMap->groupElements[$lapId])) {
+                $this->listMap->groupElements[$lapId] = new ListMapGroup(
+                    array(
+                         'fields'   => new LinkedKeyIterator(),
+                         'contacts' => new LinkedKeyIterator(),
+                    )
+                );
+            }
+        }
     }
 
+    /**
+     * @param Contacts $contacts
+     */
     protected function synchronizeContacts(Contacts $contacts)
     {
-//        $contacts->dump();
+        $this->logger->debug('Synchronizing contacts');
+
+        /** @var $contact Contact */
+        foreach ($contacts as $contact) {
+            $this->synchronizeContact($contact);
+        }
+    }
+
+    /**
+     * @param Contact $contact
+     */
+    protected function synchronizeContact(Contact $contact)
+    {
+        foreach ($contact->groups as $gGroupId) {
+            $lapGroupId = $this->listMap->groups[$gGroupId];
+
+            if (empty($lapGroupId)) {
+                $this->logger->warning("Unable to import into nonexistent group '$gGroupId'.");
+
+                continue;
+            }
+
+            $this->synchronizeFields($contact->fields, $lapGroupId);
+
+            /** @var $groupElements ListMapGroup */
+            $groupElements = $this->listMap->groupElements[$lapGroupId];
+
+            $lapContactId = null;
+
+            if (isset($groupElements->contacts[$contact->gId])) {
+                $lapContactId = $groupElements->contacts[$contact->gId];
+            }
+
+            if (empty($lapContactId)) {
+                $this->laposta->addContact($lapGroupId, $contact);
+
+                $lapContactId = $contact->lapId;
+
+                $this->logger->debug(
+                    "Added new contact '{$contact->email}' in group '$lapGroupId'. Field id is '$lapContactId'"
+                );
+
+                $groupElements->contacts[$contact->lapId] = $contact->gId;
+            }
+            else {
+                $this->logger->debug("Skipping contact '{$contact->email}' in group '$lapGroupId' with id '$lapContactId'");
+            }
+        }
+    }
+
+    /**
+     * @param Fields $fields
+     * @param string $lapGroupId
+     */
+    protected function synchronizeFields($fields, $lapGroupId)
+    {
+        /** @var $groupElements ListMapGroup */
+        $groupElements = $this->listMap->groupElements[$lapGroupId];
+
+        /** @var $field Field */
+        foreach ($fields as $field) {
+            $lapId = null;
+
+            if (isset($groupElements->fields[$field->definition->identifier])) {
+                $lapId = $groupElements->fields[$field->definition->identifier];
+            }
+
+            if (empty($lapId)) {
+                $lapId = $this->laposta->addField($lapGroupId, $field);
+
+                $this->logger->debug(
+                    "Added new field '{$field->definition->name}' in group '$lapGroupId'. Field id is '$lapId'"
+                );
+
+                $groupElements->fields[$lapId] = $field->definition->identifier;
+            }
+            else {
+                $this->logger->debug("Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'");
+            }
+        }
     }
 
     /**
@@ -134,15 +262,17 @@ class SyncGoogle extends AbstractCommand
     public function execute()
     {
         $this->clientData->googleTokenSet->refresh_token = $this->clientData->googleRefreshToken;
-
         $this->clientData->googleTokenSet->fromArray(
             $this->google->setAccessToken($this->clientData->googleTokenSet)
         );
 
+        \Laposta::setApiKey($this->clientData->lapostaApiToken);
+
+        /*
+        $this->laposta->removeLists();
+        /*/
         while ($this->google->hasMoreGroups()) {
             $this->synchronizeGroups($this->google->getGroups());
-
-            break; // TODO(mertenvg): remove break
         }
 
         while ($this->google->hasMoreContacts()) {
@@ -150,5 +280,6 @@ class SyncGoogle extends AbstractCommand
 
             break; // TODO(mertenvg): remove break
         }
+        //*/
     }
 }

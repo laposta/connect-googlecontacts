@@ -33,7 +33,7 @@ class Contact extends Entity
     public $fullName;
 
     /**
-     * @var ArrayIterator
+     * @var \ApiAdapter\Contacts\Entity\Collection\Fields
      */
     public $fields;
 
@@ -61,4 +61,9 @@ class Contact extends Entity
      * @var ArrayIterator
      */
     public $groups;
+
+    /**
+     * @var string
+     */
+    public $lapId;
 } 

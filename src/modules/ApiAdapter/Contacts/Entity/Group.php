@@ -7,7 +7,7 @@ use Entity\Entity;
 class Group extends Entity
 {
     /**
-     * @var \ApiAdapter\Contacts\Entity\Collection\Fields
+     * @var Collection\Fields
      */
     public $fields;
 
@@ -35,4 +35,9 @@ class Group extends Entity
      * @var string
      */
     public $gUpdated;
+
+    /**
+     * @var string
+     */
+    public $lapId;
 }

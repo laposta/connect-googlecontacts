@@ -2,7 +2,8 @@
 
 namespace ApiAdapter\Contacts\Entity\Collection;
 
-use ApiAdapter\Contacts\Entity\Collection\Abstraction\AbstractEntityCollection;
+use ApiAdapter\Contacts\Abstraction\AbstractEntityCollection;
+use ApiAdapter\Contacts\Abstraction\FactoryInterface;
 use ApiAdapter\Contacts\Entity\Contact;
 use InvalidArgumentException;
 
@@ -17,18 +18,20 @@ use InvalidArgumentException;
 class Contacts extends AbstractEntityCollection
 {
     /**
-     * @var Contact
+     * @var FactoryInterface
      */
-    private $contactPrototype;
+    private $factory;
 
     /**
      * Constructor override
+     *
+     * @param FactoryInterface $factory
      */
-    public function __construct(Contact $contactPrototype)
+    public function __construct(FactoryInterface $factory)
     {
         parent::__construct();
 
-        $this->contactPrototype = $contactPrototype;
+        $this->factory = $factory;
     }
 
     /**
@@ -46,12 +49,10 @@ class Contacts extends AbstractEntityCollection
         }
 
         if (!is_traversable($value)) {
-            throw new InvalidArgumentException("Unable to convert '$value' to a Contact");
+            throw new InvalidArgumentException("Unable to convert '$value' to a Group");
         }
 
-        $contact = clone $this->contactPrototype;
-
-        return $contact->fromArray($value);
+        return $this->factory->createContact($value);
     }
 }
 

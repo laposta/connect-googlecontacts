@@ -10,7 +10,7 @@ namespace Iterator;
  *
  * @package Iterator
  */
-class LinkedMultiKeyIterator extends LinkedKeyIterator
+class MultiLinkedKeyIterator extends LinkedKeyIterator
 {
     /**
      * Initialize the linked key iterator

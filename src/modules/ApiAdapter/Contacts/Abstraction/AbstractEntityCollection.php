@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity\Collection\Abstraction;
+namespace ApiAdapter\Contacts\Abstraction;
 
 use Entity\Entity;
 use Entity\Marshal\Typed;

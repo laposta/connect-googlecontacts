@@ -2,63 +2,36 @@
 
 namespace Config;
 
-use InvalidArgumentException;
+use Iterator\ArrayPathIterator;
 use RuntimeException;
 
 /**
  * Class Config
- * Decorates the \Iterator\ArrayPathIterator to allow path based config array navigation.
+ * <p>Decorates the \Iterator\ArrayPathIterator to allow path based config array navigation.</p>
  *
  * @package Config
  */
 class Config
 {
     /**
-     * @var array
+     * @var ArrayPathIterator
      */
-    protected $config = array();
+    protected $iterator = array();
 
     /**
-     * @param array $config
-     * @param array $supplement
+     * @param ArrayPathIterator $iterator
+     * @param array             $config
+     * @param array             $override
      */
-    function __construct(array $config, $supplement = null)
+    function __construct(ArrayPathIterator $iterator, array $config, $override = null)
     {
-        if (is_array($supplement)) {
-            $config = array_replace_recursive($config, $supplement);
+        if (is_array($override)) {
+            $config = array_replace_recursive($config, $override);
         }
 
-        $this->extrapolate($this->config, $config);
-    }
+        $this->iterator = $iterator;
 
-    /**
-     * Extrapolate nested array values into dot-notation accessible configuration values.
-     *
-     * @param array  $array
-     * @param mixed  $node
-     * @param string $prefix
-     *
-     * @throws InvalidArgumentException
-     */
-    protected function extrapolate(&$array, &$node, $prefix = '')
-    {
-        if (!is_array($array)) {
-            throw new InvalidArgumentException('Expected first parameter to Config::extrapolate() to be an array.');
-        }
-
-        if (!empty($prefix)) {
-            $array[$prefix] = $node;
-        }
-
-        if (!is_array($node)) {
-            return;
-        }
-
-        $prefix = ltrim("$prefix.", '.');
-
-        foreach ($node as $key => &$value) {
-            $this->extrapolate($array, $value, $prefix . $key);
-        }
+        $this->iterator->fromArray($config);
     }
 
     /**
@@ -70,11 +43,7 @@ class Config
      */
     public function has($path)
     {
-        if (!isset($this->config[$path])) {
-            return false;
-        }
-
-        return true;
+        return isset($this->iterator[$path]);
     }
 
     /**
@@ -85,10 +54,23 @@ class Config
      */
     public function get($path)
     {
-        if (!isset($this->config[$path])) {
+        if (!$this->has($path)) {
             throw new RuntimeException("Given '$path' could not be found in configuration parameters");
         }
 
-        return $this->config[$path];
+        return $this->iterator[$path];
+    }
+
+    /**
+     * @param string $path
+     * @param mixed  $value
+     *
+     * @return $this
+     */
+    public function set($path, $value)
+    {
+        $this->iterator[$path] = $value;
+
+        return $this;
     }
 }

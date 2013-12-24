@@ -74,6 +74,11 @@ class LinkedKeyIterator extends ArrayIterator
      */
     public function offsetSet($index, $newval)
     {
+        if (!is_scalar($newval)) {
+            $val = serialize($newval);
+            throw new \InvalidArgumentException("Unable to accept '$val' for '$index'. Value must be a scalar");
+        }
+
         parent::offsetSet($index, $newval);
 
         $this->isDirty = true;

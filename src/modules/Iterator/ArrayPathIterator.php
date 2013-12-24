@@ -8,10 +8,19 @@ use Traversable;
 
 /**
  * Class ArrayPathIterator
- * Returns the desired child specified by a.
- * if target is not found null is returned.
- * i.e array_target(array('one'=>array('two'=>array('three'=>1))), "one.two")
- * will return a reference to the value of $array[one][two].
+ * <p>Allows navigation of multidimensional arrays using a path as a key.</p>
+ * <code>
+ *  $a = new ArrayPathIterator(
+ *      array(
+ *          'one' => array(
+ *              'two' => array(
+ *                  'three' => '123',
+ *               ),
+ *          ),
+ *      )
+ *  );
+ *  echo $a['one.two.three']; // 123
+ * </code>
  *
  * @package Iterator
  */
@@ -20,7 +29,7 @@ class ArrayPathIterator extends ArrayIterator
     /**
      * @var ArrayIterator
      */
-    protected $cache = array();
+    protected $cache;
 
     /**
      * @var string
@@ -125,6 +134,10 @@ class ArrayPathIterator extends ArrayIterator
             return parent::offsetGet($index);
         }
 
+        if (!$this->offsetExists($index)) {
+            return null;
+        }
+
         return $this->cache->offsetGet($index);
     }
 
@@ -133,8 +146,23 @@ class ArrayPathIterator extends ArrayIterator
      */
     public function offsetSet($index, $newval)
     {
-        $targets = explode($this->delimiter, $index);
-        $pointer = $this;
+        $targets       = explode($this->delimiter, $index);
+        $key           = array_shift($targets);
+        $this->isDirty = true;
+
+        if (empty($targets)) {
+            parent::offsetSet($key, $newval);
+
+            return;
+        }
+
+        $source  = array();
+
+        if (parent::offsetExists($key)) {
+            $source = parent::offsetGet($key);
+        }
+
+        $pointer = & $source;
 
         while (count($targets) > 0) {
             $step = array_shift($targets);
@@ -146,9 +174,8 @@ class ArrayPathIterator extends ArrayIterator
             $pointer = & $pointer[$step];
         }
 
-        $pointer = $newval;
-
-        $this->isDirty = true;
+        $pointer    = $newval;
+        $this[$key] = $source;
     }
 
     /**

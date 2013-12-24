@@ -85,7 +85,7 @@ class LoadClientMap extends AbstractCommand
         }
 
         $this->dataStore->retrieve(
-            new File($this->config->get('path.data') . '/mappings/' . $this->clientToken . '.php')
+            new File($this->config->get('path.data') . '/maps/' . $this->clientToken . '.php')
         );
 
         if ($this->dataStore->hasContent()) {

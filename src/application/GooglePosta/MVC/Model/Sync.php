@@ -8,18 +8,19 @@ use GooglePosta\Command\StoreClientData;
 use GooglePosta\Command\StoreClientMap;
 use GooglePosta\Command\Sync\SyncGoogle;
 use GooglePosta\Entity\ClientData;
+use GooglePosta\Entity\ListMap;
 use GooglePosta\MVC\Base\Model;
 use RuntimeException;
 
 class Sync extends Model
 {
     /**
-     * @var \GooglePosta\Entity\ClientData
+     * @var ClientData
      */
     private $clientData;
 
     /**
-     * @var array
+     * @var ListMap
      */
     private $clientMap;
 
@@ -47,9 +48,13 @@ class Sync extends Model
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
+        $this->loadClientMap();
+
         /** @var $command SyncGoogle */
         $command = $this->getCommandFactory()->create('GooglePosta\Command\Sync\SyncGoogle');
-        $command->setClientData($this->clientData)->execute();
+        $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+
+        $this->persist();
 
         return $this;
     }

@@ -37,7 +37,7 @@ return array(
     /*
      * Set the default time limit
      */
-    'time_limit' => 0,
+    'time_limit'   => 0,
     /*
      * Debug settings
      */

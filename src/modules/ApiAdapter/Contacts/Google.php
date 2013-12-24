@@ -3,53 +3,49 @@
 namespace ApiAdapter\Contacts;
 
 use ApiAdapter\Contacts\Abstraction\ContactsAdapterInterface;
+use ApiAdapter\Contacts\Abstraction\FactoryInterface as ContactsFactoryInterface;
 use ApiAdapter\Contacts\Entity\Collection\Contacts;
+use ApiAdapter\Contacts\Entity\Collection\Fields;
 use ApiAdapter\Contacts\Entity\Collection\Groups;
 use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Factory\Contacts as ContactsFactory;
-use ApiAdapter\Contacts\Entity\Factory\Fields as FieldsFactory;
-use ApiAdapter\Contacts\Entity\Factory\Groups as GroupsFactory;
 use ApiAdapter\Contacts\Entity\Group;
 use ArrayIterator;
 use Google_Client;
 use Google_Http_Request;
+use Google_Http_REST;
 use GooglePosta\Entity\GoogleTokenSet;
+use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
 use RuntimeException;
 
 class Google implements ContactsAdapterInterface
 {
     /**
-     * @var \Google_Client
+     * @var Google_Client
      */
     private $client;
 
     /**
-     * @var GroupsFactory
+     * @var ContactsFactoryInterface
      */
-    private $groupsFactory;
+    private $factory;
 
     /**
-     * @var ContactsFactory
+     * @var IteratorFactoryInterface
      */
-    private $contactsFactory;
-
-    /**
-     * @var FieldsFactory
-     */
-    private $fieldsFactory;
+    private $iteratorFactory;
 
     /**
      * @var string
      */
-    private $groupsUrl;
+    private $groupsUrl = 'https://www.google.com/m8/feeds/groups/default/full?alt=json';
 
     /**
      * @var string
      */
-    private $contactsUrl;
+    private $contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json';
 
     /**
-     * @var array Mapping of fields to FieldsFactory->definitionsMap
+     * @var array Mapping of fields to a unique field type identifier
      */
     private $fieldMap = array(
         'gContact$birthday.when'                      => 'birth_date',
@@ -62,61 +58,25 @@ class Google implements ContactsAdapterInterface
         'gd$structuredPostalAddress.0.gd$postcode.$t' => 'address_postcode',
         'gd$structuredPostalAddress.0.gd$city.$t'     => 'address_city',
         'gd$structuredPostalAddress.0.gd$country.$t'  => 'address_country',
-        ''                                            => '',
+        'gContact$website.0.href'                     => 'website',
         'content.$t'                                  => 'notes',
     );
-
-    /*
-gContact$userDefinedField.0.key = 'Another field'
-gContact$userDefinedField.0.value = 'with some other information'
-gContact$userDefinedField.1.key = 'What the'
-gContact$userDefinedField.1.value = 'other field'
-
-gContact$website.0.href = 'http://codeblanche.com'
-gContact$website.0.rel = 'home-page'
-gd$email.0.address = 'angus@codeblanche.com'
-gd$email.0.primary = 'true'
-gd$email.0.rel = 'http://schemas.google.com/g/2005#work'
-gd$email.1.address = 'angus.mcbiefstuk@codeblanche.com'
-gd$email.1.rel = 'http://schemas.google.com/g/2005#home'
-gd$etag = '"RXYzezVSLit7I2A9Wh5UFUoKQAU."'
-gd$name.gd$familyName.$t = 'McBiefstuk'
-gd$name.gd$fullName.$t = 'Angus McBiefstuk'
-gd$name.gd$givenName.$t = 'Angus'
-gd$organization.0.gd$orgName.$t = 'Black Angus'
-gd$organization.0.gd$orgTitle.$t = 'Butcher'
-gd$organization.0.rel = 'http://schemas.google.com/g/2005#other'
-gd$structuredPostalAddress.0.gd$city.$t = 'Velserbroek'
-gd$structuredPostalAddress.0.gd$country.$t = 'Netherlands'
-gd$structuredPostalAddress.0.gd$country.code = 'NL'
-gd$structuredPostalAddress.0.gd$formattedAddress.$t = 'Grote Boterbloem 41
-1991LJ Velserbroek
-Netherlands'
-gd$structuredPostalAddress.0.gd$postcode.$t = '1991LJ'
-gd$structuredPostalAddress.0.gd$street.$t = 'Grote Boterbloem 41'
-gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
-     */
 
     /**
      * Default constructor
      *
-     * @param Google_Client   $client
-     * @param GroupsFactory   $groupsFactory
-     * @param ContactsFactory $contactsFactory
-     * @param FieldsFactory   $fieldsFactory
+     * @param Google_Client            $client
+     * @param ContactsFactoryInterface $factory
+     * @param IteratorFactoryInterface $iteratorFactory
      */
     function __construct(
         Google_Client $client,
-        GroupsFactory $groupsFactory,
-        ContactsFactory $contactsFactory,
-        FieldsFactory $fieldsFactory
+        ContactsFactoryInterface $factory,
+        IteratorFactoryInterface $iteratorFactory
     ) {
         $this->client          = $client;
-        $this->groupsFactory   = $groupsFactory;
-        $this->contactsFactory = $contactsFactory;
-        $this->fieldsFactory   = $fieldsFactory;
-        $this->groupsUrl       = 'https://www.google.com/m8/feeds/groups/default/full?alt=json';
-        $this->contactsUrl     = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json';
+        $this->factory         = $factory;
+        $this->iteratorFactory = $iteratorFactory;
     }
 
     /**
@@ -125,17 +85,17 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      * @param string $url
      * @param string $method
      * @param array  $headers
+     * @param string $postBody
      *
      * @return array
      */
-    protected function request($url, $method = 'GET', $headers = array())
+    protected function request($url, $method = 'GET', $headers = array(), $postBody = '')
     {
         $headers = array_merge($headers, array('GData-Version' => '3.0'));
-        $request = new Google_Http_Request($this->client, $url, $method, $headers);
+        $request = new Google_Http_Request($url, $method, $headers, $postBody);
+        $auth    = $this->client->getAuth();
 
-        $this->client->getAuth()->sign($request);
-
-        return $request->execute();
+        return Google_Http_REST::execute($this->client, $auth->sign($request));
     }
 
     /**
@@ -172,16 +132,18 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      */
     protected function normalizeGroups($entries)
     {
-        $groups = $this->groupsFactory->createCollection();
+        $groups = $this->factory->createGroupCollection();
 
         foreach ($entries as $entry) {
-            $id   = $entry['id']['$t'];
+            $entry = $this->iteratorFactory->createArrayPathIterator($entry);
+
+            $id   = $entry['id.$t'];
             $data = array(
-                'title'    => array_target($entry, 'title.$t'),
-                'gLinks'   => new ArrayIterator($this->normalizeLinks(array_target($entry, 'link'))),
-                'gEtag'    => array_target($entry, 'gd$etag'),
-                'gId'      => array_target($entry, 'id.$t'),
-                'gUpdated' => array_target($entry, 'updated.$t'),
+                'title'    => $entry['title.$t'],
+                'gLinks'   => $this->normalizeLinks($entry['link']),
+                'gEtag'    => $entry['gd$etag'],
+                'gId'      => $entry['id.$t'],
+                'gUpdated' => $entry['updated.$t'],
             );
 
             $groups[$id] = $data;
@@ -212,8 +174,6 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
         $feedLinks         = $this->normalizeLinks($response['feed']['link']);
         $this->contactsUrl = isset($feedLinks['next']) ? $feedLinks['next'] : null;
 
-        $contacts->dump();
-
         return $contacts;
     }
 
@@ -226,23 +186,24 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      */
     protected function normalizeContacts($entries)
     {
-        $contacts = $this->contactsFactory->createCollection();
+        $contacts = $this->factory->createContactCollection();
 
         foreach ($entries as $entry) {
-            $id     = array_target($entry, 'id.$t');
-            $groups = $this->normalizeGroupMemberships(array_target($entry, 'gContact$groupMembershipInfo'));
-            $data   = array(
-                'title'      => array_target($entry, 'title.$t'),
-                'email'      => $this->resolvePrimaryAddress(array_target($entry, 'gd$email')),
-                'givenName'  => array_target($entry, 'gd$name.gd$givenName.$t'),
-                'familyName' => array_target($entry, 'gd$name.gd$familyName.$t'),
-                'fullName'   => array_target($entry, 'gd$name.gd$fullName.$t'),
-                'fields'     => new ArrayIterator($this->normalizeFields($entry)),
-                'gLinks'     => new ArrayIterator($this->normalizeLinks(array_target($entry, 'link'))),
-                'gEtag'      => array_target($entry, 'gd$etag'),
-                'gId'        => array_target($entry, 'id.$t'),
-                'gUpdated'   => array_target($entry, 'updated.$t'),
-                'groups'     => new ArrayIterator($groups),
+            $entry = $this->iteratorFactory->createArrayPathIterator($entry);
+
+            $id   = $entry['id.$t'];
+            $data = array(
+                'title'      => $entry['title.$t'],
+                'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
+                'givenName'  => $entry['gd$name.gd$givenName.$t'],
+                'familyName' => $entry['gd$name.gd$familyName.$t'],
+                'fullName'   => $entry['gd$name.gd$fullName.$t'],
+                'fields'     => $this->normalizeFields($entry),
+                'gLinks'     => $this->normalizeLinks($entry['link']),
+                'gEtag'      => $entry['gd$etag'],
+                'gId'        => $entry['id.$t'],
+                'gUpdated'   => $entry['updated.$t'],
+                'groups'     => $this->normalizeGroupMemberships($entry['gContact$groupMembershipInfo']),
             );
 
             $contacts[$id] = $data;
@@ -254,17 +215,32 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
     /**
      * Normalize fields
      *
-     * @param array $entry
+     * @param ArrayIterator $entry
      *
-     * @return array
+     * @return Fields
      */
     protected function normalizeFields($entry)
     {
-        if ($entry['title']['$t'] === 'Angus McBiefstuk') {
-            pretty_dump($entry);
+        $fields = $this->factory->createFieldCollection();
+
+        foreach ($this->fieldMap as $path => $type) {
+            if (!isset($entry[$path])) {
+                continue;
+            }
+
+            $fields[$type] = $this->factory->createField($type, $entry[$path]);
         }
 
-        return array();
+        if (!isset($entry['gContact$userDefinedField'])) {
+            return $fields;
+        }
+
+        foreach ($entry['gContact$userDefinedField'] as $customField) {
+            $type          = $customField['key'];
+            $fields[$type] = $this->factory->createField($type, $customField['value']);
+        }
+
+        return $fields;
     }
 
     /**
@@ -272,15 +248,15 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      *
      * @param array $membershipInfoList
      *
-     * @return array
+     * @return ArrayIterator
      */
     protected function normalizeGroupMemberships($membershipInfoList)
     {
-        if (!is_array($membershipInfoList)) {
-            return array();
-        }
+        $groups = $this->iteratorFactory->createArrayIterator();
 
-        $groups = array();
+        if (!is_array($membershipInfoList)) {
+            return $groups;
+        }
 
         foreach ($membershipInfoList as $membershipInfo) {
             if ($membershipInfo['deleted'] === 'true') {
@@ -324,7 +300,7 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      *
      * @param Group $group
      *
-     * @return bool
+     * @return Group
      */
     public function addGroup(Group $group)
     {
@@ -332,35 +308,11 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
     }
 
     /**
-     * Add a new contact
-     *
-     * @param Group   $group
-     * @param Contact $contact
-     *
-     * @return bool
-     */
-    public function addContact(Group $group, Contact $contact)
-    {
-    }
-
-    /**
-     * Modify an existing contact
-     *
-     * @param Group   $group
-     * @param Contact $contact
-     *
-     * @return bool
-     */
-    public function updateContact(Group $group, Contact $contact)
-    {
-    }
-
-    /**
      * Modify an existing group
      *
      * @param Group $group
      *
-     * @return bool
+     * @return Group
      */
     public function updateGroup(Group $group)
     {
@@ -395,15 +347,15 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
      *
      * @param array $links
      *
-     * @return array
+     * @return ArrayIterator
      */
     protected function normalizeLinks($links)
     {
-        if (!is_array($links)) {
-            return array();
-        }
+        $result = $this->iteratorFactory->createArrayIterator();
 
-        $result = array();
+        if (!is_array($links)) {
+            return $result;
+        }
 
         foreach ($links as $link) {
             $rel          = $link['rel'];
@@ -455,5 +407,29 @@ gd$structuredPostalAddress.0.rel = 'http://schemas.google.com/g/2005#work'
     public function hasMoreContacts()
     {
         return !empty($this->contactsUrl);
+    }
+
+    /**
+     * Add a new contact
+     *
+     * @param string  $groupId
+     * @param Contact $contact
+     *
+     * @return Contact
+     */
+    public function addContact($groupId, Contact $contact)
+    {
+    }
+
+    /**
+     * Modify an existing contact
+     *
+     * @param string  $groupId
+     * @param Contact $contact
+     *
+     * @return Contact
+     */
+    public function updateContact($groupId, Contact $contact)
+    {
     }
 }

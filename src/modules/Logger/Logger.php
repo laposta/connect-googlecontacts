@@ -111,7 +111,7 @@ class Logger extends AbstractLogger
     {
         $microTime = microtime(true);
 
-        return date('H:i:s.') . round($microTime - intval($microTime) * 1000);
+        return date('H:i:s.') . str_pad(round(($microTime - intval($microTime)) * 1000), 3, '0', STR_PAD_LEFT);
     }
 
     /**

@@ -45,28 +45,6 @@ class Bootstrap
     }
 
     /**
-     * Boot the application
-     */
-    public function boot()
-    {
-        $this->initEnvironment();
-        $this->initDependencies();
-
-        $main = $this->dm->get($this->appController);
-
-        if (!($main instanceof \MVC\Controller)) {
-            throw new RuntimeException('Bootstrap is unable to load the given application controller');
-        }
-
-        try {
-            $main->run();
-        }
-        catch (\Exception $e) {
-            $main->err($e);
-        }
-    }
-
-    /**
      * Load any php files found in the given path.
      *
      * @param $path
@@ -103,6 +81,51 @@ class Bootstrap
     }
 
     /**
+     * Boot the application
+     */
+    public function boot()
+    {
+        $this->initEnvironment();
+        $this->initModules();
+        $this->initDependencies();
+
+        $main = $this->dm->get($this->appController);
+
+        if (!($main instanceof \MVC\Controller)) {
+            throw new RuntimeException('Bootstrap is unable to load the given application controller');
+        }
+
+        try {
+            $main->run();
+        }
+        catch (\Exception $e) {
+            $main->err($e);
+        }
+    }
+
+    /**
+     * Initialize the applications' environment
+     */
+    protected function initEnvironment()
+    {
+        $config = $this->getConfig();
+
+        date_default_timezone_set($config->get('timezone'));
+        ini_set('memory_limit', $config->get('memory_limit'));
+        set_time_limit($config->get('time_limit'));
+    }
+
+    /**
+     * Register modules with the dependency manager
+     */
+    private function initModules()
+    {
+        $this->dm->module('Iterator\Depend\Module');
+        $this->dm->module('Logger\Depend\Module');
+        $this->dm->module('ApiAdapter\Depend\Module');
+    }
+
+    /**
      * Get the configuration from config.php and config.local.php
      *
      * @return Config
@@ -117,6 +140,7 @@ class Bootstrap
         $this->dm->describe(
             'Config\Config',
             array(
+                $this->dm->describe('Iterator\ArrayPathIterator'),
                 require $this->projectRoot . '/config.php',
                 @include $this->projectRoot . '/config.local.php',
             )
@@ -130,30 +154,21 @@ class Bootstrap
      */
     protected function initDependencies()
     {
-        /*
-         * Set the class for InjectorInterface dependencies
-         */
-        $this->dm->implement(
-            'Depend\Abstraction\InjectorInterface',
-            'Depend\Injector'
-        );
-
         /** @var $injectorFactory \Depend\InjectorFactory */
         $injectorFactory = $this->dm->get('Depend\InjectorFactory');
         $config          = $this->getConfig();
 
         /*
-         * Set the classes for LoggerInterface and logger AdapterInterface
+         * Configure the logger
          */
-        $this->dm->implement('Logger\Adapter\Abstraction\AdapterInterface', 'Logger\Adapter\File');
-        $this->dm->implement('Logger\Abstraction\LoggerInterface', 'Logger\Logger');
         $this->dm->describe(
             'Logger\Logger',
             array(
                 $config->get('debug.log_level'),
-                $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
+                $this->dm->describe('Logger\Adapter\Output'),
             )
         );
+        // $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
 
         /*
          * Set the class for DependencyContainerInterface dependencies
@@ -199,17 +214,5 @@ class Bootstrap
                 $injectorFactory->create('setScopes', $config->get('google.scopes')),
             )
         );
-    }
-
-    /**
-     * Initialize the applications' environment
-     */
-    protected function initEnvironment()
-    {
-        $config = $this->getConfig();
-
-        date_default_timezone_set($config->get('timezone'));
-        ini_set('memory_limit', $config->get('memory_limit'));
-        set_time_limit($config->get('time_limit'));
     }
 }

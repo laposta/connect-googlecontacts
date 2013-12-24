@@ -69,36 +69,36 @@ interface ContactsAdapterInterface
      *
      * @param Group $group
      *
-     * @return bool
+     * @return Group
      */
     public function addGroup(Group $group);
 
     /**
      * Add a new contact
      *
-     * @param Group   $group
+     * @param string $groupId
      * @param Contact $contact
      *
-     * @return bool
+     * @return Contact
      */
-    public function addContact(Group $group, Contact $contact);
+    public function addContact($groupId, Contact $contact);
 
     /**
      * Modify an existing contact
      *
-     * @param Group   $group
+     * @param string $groupId
      * @param Contact $contact
      *
-     * @return bool
+     * @return Contact
      */
-    public function updateContact(Group $group, Contact $contact);
+    public function updateContact($groupId, Contact $contact);
 
     /**
      * Modify an existing group
      *
      * @param Group $group
      *
-     * @return bool
+     * @return Group
      */
     public function updateGroup(Group $group);
 }

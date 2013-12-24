@@ -12,6 +12,10 @@ class FieldDefinition extends Entity
 
     const TYPE_DATE = 'date';
 
+    const TYPE_SELECT_SINGLE = 'select_single';
+
+    const TYPE_SELECT_MULTIPLE = 'select_multiple';
+
     /**
      * @var string
      */
@@ -25,12 +29,12 @@ class FieldDefinition extends Entity
     /**
      * @var string
      */
-    public $type;
+    public $type = self::TYPE_TEXT;
 
     /**
      * @var string
      */
-    public $defaultValue;
+    public $defaultValue = '';
 
     /**
      * @var bool
@@ -46,4 +50,14 @@ class FieldDefinition extends Entity
      * @var bool
      */
     public $showInList = false;
+
+    /**
+     * @var \ArrayIterator
+     */
+    public $options = array();
+
+    /**
+     * @var string
+     */
+    public $tag;
 } 
