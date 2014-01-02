@@ -97,6 +97,7 @@ class Authority extends Model
 
         $this->loadClientData();
 
+        $this->clientData->token           = $this->clientToken;
         $this->clientData->email           = $email;
         $this->clientData->lapostaApiToken = $apiToken;
         $this->clientData->returnUrl       = $returnUrl;

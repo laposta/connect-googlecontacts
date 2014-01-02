@@ -5,6 +5,7 @@ namespace GooglePosta\Entity;
 use Entity\Entity;
 use GooglePosta\Entity\Collection\ListMapGroups;
 use Iterator\LinkedKeyIterator;
+use Iterator\MultiLinkedKeyIterator;
 
 class ListMap extends Entity
 {
@@ -17,6 +18,11 @@ class ListMap extends Entity
      * @var \GooglePosta\Entity\Collection\ListMapGroups Laposta group id => ListMapGroup instance
      */
     public $groupElements;
+
+    /**
+     * @var \Iterator\MultiLinkedKeyIterator Laposta hook id => Laposta group id
+     */
+    public $hooks;
 
     /**
      * @param string $name
@@ -36,6 +42,10 @@ class ListMap extends Entity
 
         if ($name === 'groupElements' && !($value instanceof ListMapGroups)) {
             $value = new ListMapGroups($value);
+        }
+
+        if ($name === 'hooks' && !($value instanceof MultiLinkedKeyIterator)) {
+            $value = new MultiLinkedKeyIterator($value);
         }
 
         return parent::set($name, $value);

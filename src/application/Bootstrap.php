@@ -162,13 +162,22 @@ class Bootstrap
          * Configure the logger
          */
         $this->dm->describe(
+            'Logger\Adapter\Output',
+            array(
+                 'html' => (php_sapi_name() !== 'cli')
+            )
+        );
+        //*
+        $this->dm->describe(
             'Logger\Logger',
             array(
                 $config->get('debug.log_level'),
                 $this->dm->describe('Logger\Adapter\Output'),
             )
         );
-        // $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
+        /*/
+        $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
+        //*/
 
         /*
          * Set the class for DependencyContainerInterface dependencies

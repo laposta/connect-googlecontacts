@@ -66,4 +66,4 @@ class Contact extends Entity
      * @var string
      */
     public $lapId;
-} 
+}

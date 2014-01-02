@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "17d79d2e0aa0c8eb97989e1199192d08",
+    "hash": "f02b129e0ea8409676d2ec4c2266ac9a",
     "packages": [
         {
             "name": "codeblanche/depend",
@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/google/google-api-php-client.git",
-                "reference": "b277cb5a7355ae33aa0678532284d438df48ad8f"
+                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/b277cb5a7355ae33aa0678532284d438df48ad8f",
-                "reference": "b277cb5a7355ae33aa0678532284d438df48ad8f",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/86fb12d484da7fecbe04cecf767ac83008f24234",
+                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234",
                 "shasum": ""
             },
             "require": {
@@ -164,9 +164,9 @@
             },
             "type": "library",
             "autoload": {
-                "psr-0": {
-                    "Google": "src"
-                }
+                "classmap": [
+                    "src/"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "include-path": [
@@ -180,7 +180,7 @@
             "keywords": [
                 "google"
             ],
-            "time": "2013-12-21 04:24:18"
+            "time": "2013-12-27 15:12:28"
         },
         {
             "name": "laposta/laposta-api-php",

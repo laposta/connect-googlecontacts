@@ -9,6 +9,11 @@ class ClientData extends SecureEntity
     /**
      * @var string
      */
+    public $token;
+
+    /**
+     * @var string
+     */
     public $email;
 
     /**
@@ -41,6 +46,6 @@ class ClientData extends SecureEntity
      */
     protected function ignore()
     {
-        return array('returnUrl', 'lastUpdate');
+        return array('returnUrl', 'lastImport');
     }
 }

@@ -3,7 +3,13 @@
 namespace GooglePosta\MVC;
 
 use GooglePosta\MVC\Base\Controller;
+use GooglePosta\MVC\View;
 
+/**
+ * Class Main
+ *
+ * @package GooglePosta\MVC
+ */
 class Main extends Controller
 {
     /**
@@ -15,6 +21,7 @@ class Main extends Controller
     {
         $this->router->define('/authority/?action', 'GooglePosta\MVC\Authority');
         $this->router->define('/sync/:action', 'GooglePosta\MVC\Sync');
+        $this->router->define('/cli/:action', 'GooglePosta\MVC\Cli');
         $this->router->catchall('GooglePosta\MVC\CatchAll');
 
         return $this;
@@ -27,6 +34,16 @@ class Main extends Controller
      */
     public function run($params = array())
     {
-        $this->defineRoutes()->route($this->request->uri()->getPath());
+        if (php_sapi_name() === 'cli') {
+            global $argv;
+
+            $action = isset($argv[1]) ? $argv[1] : 'no-op';
+            $path   = "/cli/$action";
+        }
+        else {
+            $path = $this->request->uri()->getPath();
+        }
+
+        $this->defineRoutes()->route($path);
     }
 }

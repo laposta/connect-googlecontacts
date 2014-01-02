@@ -12,11 +12,18 @@ class File implements AdapterInterface
     private $path;
 
     /**
-     * @param string $path
+     * @var int
      */
-    function __construct($path)
+    private $mod;
+
+    /**
+     * @param string $path Desired file path
+     * @param int    $mod  Desired file mode e.g. 0666 (read and write to everyone)
+     */
+    function __construct($path, $mod = 0666)
     {
         $this->path = $path;
+        $this->mod  = $mod;
     }
 
     /**
@@ -29,6 +36,13 @@ class File implements AdapterInterface
     public function persist($data)
     {
         file_put_contents($this->path, "<?php\n\nreturn " . var_export($data, true) . ";\n");
+
+        try {
+            chmod($this->path, $this->mod);
+        }
+        catch (\Exception $e) {
+            // NO-OP
+        }
 
         return $this;
     }

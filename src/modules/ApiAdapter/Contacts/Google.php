@@ -10,6 +10,7 @@ use ApiAdapter\Contacts\Entity\Collection\Groups;
 use ApiAdapter\Contacts\Entity\Contact;
 use ApiAdapter\Contacts\Entity\Group;
 use ArrayIterator;
+use DateTime;
 use Google_Client;
 use Google_Http_Request;
 use Google_Http_REST;
@@ -101,7 +102,7 @@ class Google implements ContactsAdapterInterface
     /**
      * Get all groups from the API
      *
-     * @throws RuntimeException
+     * @throws \RuntimeException
      * @return Groups
      */
     public function getGroups()
@@ -112,8 +113,14 @@ class Google implements ContactsAdapterInterface
 
         $response = $this->request($this->groupsUrl);
 
-        if (!isset($response['feed']['entry']) || !is_array($response['feed']['entry'])) {
+        if (!isset($response['feed']) || !is_array($response['feed'])) {
             throw new RuntimeException('Unable to load Groups from google');
+        }
+
+        if (!isset($response['feed']['entry']) || !is_array($response['feed']['entry'])) {
+            $this->groupsUrl = '';
+
+            return $this->factory->createGroupCollection();
         }
 
         $groups          = $this->normalizeGroups($response['feed']['entry']);
@@ -155,7 +162,7 @@ class Google implements ContactsAdapterInterface
     /**
      * Get all contacts from the API
      *
-     * @throws RuntimeException
+     * @throws \RuntimeException
      * @return Contacts
      */
     public function getContacts()
@@ -166,8 +173,14 @@ class Google implements ContactsAdapterInterface
 
         $response = $this->request($this->contactsUrl);
 
-        if (!isset($response['feed']['entry']) || !is_array($response['feed']['entry'])) {
+        if (!isset($response['feed']) || !is_array($response['feed'])) {
             throw new RuntimeException('Unable to load Contacts from google');
+        }
+
+        if (!isset($response['feed']['entry']) || !is_array($response['feed']['entry'])) {
+            $this->contactsUrl = '';
+
+            return $this->factory->createContactCollection();
         }
 
         $contacts          = $this->normalizeContacts($response['feed']['entry']);
@@ -431,5 +444,30 @@ class Google implements ContactsAdapterInterface
      */
     public function updateContact($groupId, Contact $contact)
     {
+    }
+
+    /**
+     * @param DateTime $min
+     *
+     * @return $this
+     */
+    public function setDateRange(DateTime $min = null)
+    {
+        $this->groupsUrl   = preg_replace('/updated-min=[^&]*/', '', $this->groupsUrl);
+        $this->contactsUrl = preg_replace('/updated-min=[^&]*/', '', $this->contactsUrl);
+
+        if (is_null($min)) {
+            return;
+        }
+
+        $param = 'updated-min=' . $min->format('Y-m-d\TH:i:s');
+
+        if (!empty($this->groupsUrl)) {
+            $this->groupsUrl   = $this->groupsUrl . (strpos($this->groupsUrl, '?') !== false ? '&' : '?') . $param;
+        }
+
+        if (!empty($this->contactsUrl)) {
+            $this->contactsUrl = $this->contactsUrl . (strpos($this->contactsUrl, '?') !== false ? '&' : '?') . $param;
+        }
     }
 }

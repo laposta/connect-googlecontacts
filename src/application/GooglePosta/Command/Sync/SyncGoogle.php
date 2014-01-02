@@ -13,10 +13,13 @@ use ApiAdapter\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Config\Config;
+use DateTime;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\Entity\ListMap;
 use GooglePosta\Entity\ListMapGroup;
+use Iterator\Abstraction\FactoryInterface;
 use Iterator\LinkedKeyIterator;
+use Iterator\MultiLinkedKeyIterator;
 
 class SyncGoogle extends AbstractCommand
 {
@@ -51,15 +54,22 @@ class SyncGoogle extends AbstractCommand
     private $clientData;
 
     /**
-     * @param Google  $google
-     * @param Laposta $laposta
-     * @param Config  $config
+     * @var FactoryInterface
      */
-    function __construct(Google $google, Laposta $laposta, Config $config)
+    private $iteratorFactory;
+
+    /**
+     * @param Google           $google
+     * @param Laposta          $laposta
+     * @param Config           $config
+     * @param FactoryInterface $iteratorFactory
+     */
+    function __construct(Google $google, Laposta $laposta, Config $config, FactoryInterface $iteratorFactory)
     {
-        $this->config  = $config;
-        $this->google  = $google;
-        $this->laposta = $laposta;
+        $this->config          = $config;
+        $this->google          = $google;
+        $this->laposta         = $laposta;
+        $this->iteratorFactory = $iteratorFactory;
     }
 
     /**
@@ -127,7 +137,19 @@ class SyncGoogle extends AbstractCommand
      */
     protected function synchronizeGroups(Groups $groups)
     {
-        $this->logger->debug('Synchronizing groups');
+        $this->logger->info('Synchronizing groups');
+
+        if ($groups->count() === 0) {
+            $this->logger->info('No groups to synchronize');
+        }
+
+        if (!($this->listMap->hooks instanceof MultiLinkedKeyIterator)) {
+            $this->listMap->hooks = $this->iteratorFactory->createMultiLinkedKeyIterator();
+        }
+
+        $protocol = $this->config->get('ssl') ? 'https' : 'http';
+        $hostname = $this->config->get('hostname');
+        $hookUrl  = $protocol . '://' . $hostname . '/consume-events/?clientToken=' . $this->clientData->token;
 
         /** @var $group Group */
         foreach ($groups as $group) {
@@ -139,6 +161,7 @@ class SyncGoogle extends AbstractCommand
 
             if (empty($lapId)) {
                 $this->laposta->addGroup($group);
+                $this->laposta->addHooks($group, $hookUrl, $this->listMap->hooks);
 
                 $this->logger->debug("Added new group '$group->title' with id '$group->lapId'");
 
@@ -172,7 +195,11 @@ class SyncGoogle extends AbstractCommand
      */
     protected function synchronizeContacts(Contacts $contacts)
     {
-        $this->logger->debug('Synchronizing contacts');
+        $this->logger->info('Synchronizing contacts');
+
+        if ($contacts->count() === 0) {
+            $this->logger->info('No contacts to synchronize');
+        }
 
         /** @var $contact Contact */
         foreach ($contacts as $contact) {
@@ -217,7 +244,9 @@ class SyncGoogle extends AbstractCommand
                 $groupElements->contacts[$contact->lapId] = $contact->gId;
             }
             else {
-                $this->logger->debug("Skipping contact '{$contact->email}' in group '$lapGroupId' with id '$lapContactId'");
+                $this->logger->debug(
+                    "Skipping contact '{$contact->email}' in group '$lapGroupId' with id '$lapContactId'"
+                );
             }
         }
     }
@@ -249,7 +278,9 @@ class SyncGoogle extends AbstractCommand
                 $groupElements->fields[$lapId] = $field->definition->identifier;
             }
             else {
-                $this->logger->debug("Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'");
+                $this->logger->debug(
+                    "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
+                );
             }
         }
     }
@@ -268,6 +299,12 @@ class SyncGoogle extends AbstractCommand
 
         \Laposta::setApiKey($this->clientData->lapostaApiToken);
 
+        $minDate = new DateTime();
+        $minDate->setTimestamp($this->clientData->lastImport);
+        $this->google->setDateRange($minDate);
+
+        $this->clientData->lastImport = time();
+
         /*
         $this->laposta->removeLists();
         /*/
@@ -275,11 +312,17 @@ class SyncGoogle extends AbstractCommand
             $this->synchronizeGroups($this->google->getGroups());
         }
 
+        $this->logger->info('Disabling hooks for all existing groups');
+        $this->laposta->disableHooks($this->listMap->hooks);
+
         while ($this->google->hasMoreContacts()) {
             $this->synchronizeContacts($this->google->getContacts());
 
             break; // TODO(mertenvg): remove break
         }
+
+        $this->logger->info('Re-enabling hooks for all groups');
+        $this->laposta->enableHooks($this->listMap->hooks);
         //*/
     }
 }

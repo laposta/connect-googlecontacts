@@ -6,9 +6,17 @@ use ApiAdapter\Contacts\Entity\Collection\Contacts;
 use ApiAdapter\Contacts\Entity\Collection\Groups;
 use ApiAdapter\Contacts\Entity\Contact;
 use ApiAdapter\Contacts\Entity\Group;
+use DateTime;
 
 interface ContactsAdapterInterface
 {
+    /**
+     * @param DateTime $min
+     *
+     * @return $this
+     */
+    public function setDateRange(DateTime $min = null);
+
     /**
      * Set the access token for the API
      *
@@ -21,6 +29,7 @@ interface ContactsAdapterInterface
     /**
      * Get groups from the API
      *
+     * @internal param \DateTime $since
      * @return Groups
      */
     public function getGroups();
@@ -44,6 +53,7 @@ interface ContactsAdapterInterface
     /**
      * Get contacts from the API
      *
+     * @internal param \DateTime $since
      * @return Contacts
      */
     public function getContacts();
@@ -76,7 +86,7 @@ interface ContactsAdapterInterface
     /**
      * Add a new contact
      *
-     * @param string $groupId
+     * @param string  $groupId
      * @param Contact $contact
      *
      * @return Contact
@@ -86,7 +96,7 @@ interface ContactsAdapterInterface
     /**
      * Modify an existing contact
      *
-     * @param string $groupId
+     * @param string  $groupId
      * @param Contact $contact
      *
      * @return Contact

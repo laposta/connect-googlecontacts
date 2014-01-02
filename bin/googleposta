@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+
+try {
+    require_once __DIR__ . '/../bootstrap.php';
+}
+catch (Exception $e) {
+    // NO-OP
+}

@@ -2,6 +2,8 @@
 
 namespace GooglePosta\MVC\Model;
 
+use Command\CommandFactory;
+use DirectoryIterator;
 use GooglePosta\Command\LoadClientData;
 use GooglePosta\Command\LoadClientMap;
 use GooglePosta\Command\StoreClientData;
@@ -10,9 +12,12 @@ use GooglePosta\Command\Sync\SyncGoogle;
 use GooglePosta\Entity\ClientData;
 use GooglePosta\Entity\ListMap;
 use GooglePosta\MVC\Base\Model;
+use Logger\Abstraction\LoggerInterface;
+use RegexIterator;
 use RuntimeException;
+use SplFileInfo;
 
-class Sync extends Model
+class Cli extends Model
 {
     /**
      * @var ClientData
@@ -30,35 +35,65 @@ class Sync extends Model
     private $clientToken;
 
     /**
+     * @var LoggerInterface;
+     */
+    private $logger;
+
+    public function __construct(CommandFactory $commandFactory, LoggerInterface $logger)
+    {
+        parent::__construct($commandFactory);
+
+        $this->logger = $logger;
+    }
+
+    /**
      * Import contacts from google.
      *
-     * @param string $email    Laposta account email
-     * @param string $apiToken Laposta API token
+     * @param string $dataDir
      *
-     * @return $this
      * @throws \RuntimeException
+     * @return $this
      */
-    public function importFromGoogle($email, $apiToken)
+    public function importFromGoogle($dataDir)
     {
-        $this->clientToken = $this->createClientToken($email);
-
-        $this->loadClientData();
-
-        if ($this->clientData->lapostaApiToken !== $apiToken) {
-            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
+        if (!file_exists($dataDir) || !is_dir($dataDir)) {
+            throw new RuntimeException("Unable to load clients from '$dataDir'. Given path is not a directory.");
         }
 
-        $this->loadClientMap();
+        $this->logger->info("Scanning directory '$dataDir' for bridges.");
 
-        $this->clientData->token = $this->clientToken;
+        $directory = new DirectoryIterator($dataDir);
+        $list      = new RegexIterator($directory, '/\.php$/i');
 
-        /** @var $command SyncGoogle */
-        $command = $this->getCommandFactory()->create('GooglePosta\Command\Sync\SyncGoogle');
-        $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+        for ($list->rewind(); $list->valid(); $list->next()) {
+            $this->resetClientProperties();
 
-        $this->persist();
+            /** @var $file SplFileInfo */
+            $file              = $list->current();
+            $this->clientToken = $file->getBasename('.php');
+
+            $this->logger->info("Commencing import for bridge '$this->clientToken'");
+
+            $this->loadClientData();
+            $this->loadClientMap();
+
+            $this->clientData->token = $this->clientToken;
+
+            /** @var $command SyncGoogle */
+            $command = $this->getCommandFactory()->create('GooglePosta\Command\Sync\SyncGoogle');
+            $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+
+            $this->persist();
+        }
 
         return $this;
+    }
+
+    protected function resetClientProperties()
+    {
+        $this->clientData  = null;
+        $this->clientMap   = null;
+        $this->clientToken = null;
     }
 
     /**

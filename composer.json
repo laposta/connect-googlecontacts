@@ -21,5 +21,15 @@
             "GooglePosta" : "src/application/",
             ""            : "src/modules/"
         }
+    },
+    "scripts" : {
+        "pre-install-cmd" : [],
+        "post-install-cmd" : [],
+        "pre-update-cmd" : [],
+        "post-update-cmd" : [],
+        "pre-autoload-dump" : [],
+        "post-autoload-dump" : [
+            "chmod ugo+x ./bin/googleposta"
+        ]
     }
 }

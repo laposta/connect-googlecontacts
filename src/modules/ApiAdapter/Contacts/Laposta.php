@@ -10,10 +10,13 @@ use ApiAdapter\Contacts\Entity\Collection\Groups;
 use ApiAdapter\Contacts\Entity\Contact;
 use ApiAdapter\Contacts\Entity\Field;
 use ApiAdapter\Contacts\Entity\Group;
+use DateTime;
 use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
+use Iterator\MultiLinkedKeyIterator;
 use Laposta as LapostaApi;
 use Laposta_List;
 use Laposta_Member;
+use Laposta_Webhook;
 
 class Laposta implements ContactsAdapterInterface
 {
@@ -269,5 +272,85 @@ class Laposta implements ContactsAdapterInterface
         foreach ($result['data'] as $item) {
             $list->delete($item['list']['list_id']);
         };
+    }
+
+    /**
+     * @param DateTime $min
+     *
+     * @return $this
+     */
+    public function setDateRange(DateTime $min = null)
+    {
+        // NO-OP
+    }
+
+    /**
+     * @param Group                  $group
+     * @param string                 $callbackUrl
+     * @param MultiLinkedKeyIterator $hooks
+     *
+*@return $this
+     */
+    public function addHooks(Group $group, $callbackUrl, MultiLinkedKeyIterator $hooks)
+    {
+        if (empty($callbackUrl)) {
+            return $this;
+        }
+
+        $events = array(
+            'subscribed',
+            'modified',
+            'deactivated',
+        );
+
+        foreach ($events as $event) {
+            $hook   = new Laposta_Webhook($group->lapId);
+
+            $result = $hook->create(
+                array(
+                     'event' => $event,
+                     'url'   => $callbackUrl,
+                     'blocked' => 'false',
+                )
+            );
+
+            $result = $this->iteratorFactory->createArrayPathIterator($result);
+
+            $hooks[$result['webhook.webhook_id']] = $group->lapId;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Temporarily disable the webhooks.
+     *
+     * @param MultiLinkedKeyIterator $hooks
+     *
+     * @return $this
+     */
+    public function disableHooks(MultiLinkedKeyIterator $hooks)
+    {
+        foreach ($hooks as $hookId => $groupId) {
+            $hook = new Laposta_Webhook($groupId);
+
+            $hook->update($hookId, array('blocked' => 'true'));
+        }
+    }
+
+    /**
+     * Re-enable temporarily disabled webhooks.
+     *
+     * @param MultiLinkedKeyIterator $hooks
+     *
+     * @return $this
+     */
+    public function enableHooks(MultiLinkedKeyIterator $hooks)
+    {
+        foreach ($hooks as $hookId => $groupId) {
+            $hook = new Laposta_Webhook($groupId);
+
+            $hook->update($hookId, array('blocked' => 'false'));
+        }
     }
 }
