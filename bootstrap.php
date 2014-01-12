@@ -3,7 +3,7 @@
 require __DIR__ . '/vendor/autoload.php';
 
 try {
-    $bs = new Bootstrap(new \Depend\Manager(), __DIR__, 'GooglePosta\MVC\Main');
+    $bs = new Bootstrap(new \Depend\Manager(), __DIR__, 'Connect\MVC\Main');
     $bs->loadGlobals(__DIR__ . '/src/global');
     $bs->boot();
 }

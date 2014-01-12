@@ -122,7 +122,7 @@ class Bootstrap
     {
         $this->dm->module('Iterator\Depend\Module');
         $this->dm->module('Logger\Depend\Module');
-        $this->dm->module('ApiAdapter\Depend\Module');
+        $this->dm->module('ApiHelper\Depend\Module');
     }
 
     /**
@@ -140,9 +140,9 @@ class Bootstrap
         $this->dm->describe(
             'Config\Config',
             array(
-                $this->dm->describe('Iterator\ArrayPathIterator'),
-                require $this->projectRoot . '/config.php',
-                @include $this->projectRoot . '/config.local.php',
+                 $this->dm->describe('Iterator\ArrayPathIterator'),
+                 require $this->projectRoot . '/config.php',
+                 @include $this->projectRoot . '/config.local.php',
             )
         );
 
@@ -162,30 +162,21 @@ class Bootstrap
          * Configure the logger
          */
         $this->dm->describe(
-            'Logger\Adapter\Output',
-            array(
-                 'html' => (php_sapi_name() !== 'cli')
-            )
-        );
-        //*
-        $this->dm->describe(
             'Logger\Logger',
             array(
-                $config->get('debug.log_level'),
-                $this->dm->describe('Logger\Adapter\Output'),
+                 $config->get('debug.log_level'),
+                 /*
+                 $this->dm->describe('Logger\Adapter\Output', array('html' => (php_sapi_name() !== 'cli'))),
+                 /*/
+                 $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
+                 //*/
             )
         );
-        /*/
-        $this->dm->describe('Logger\Adapter\File', array($config->get('path.log'))),
-        //*/
 
         /*
          * Set the class for DependencyContainerInterface dependencies
          */
-        $this->dm->implement(
-            'Web\Route\Abstraction\DependencyContainerInterface',
-            'Web\Route\DependManagerProxy'
-        );
+        $this->dm->implement('Web\Route\Abstraction\DependencyContainerInterface', 'Web\Route\DependManagerProxy');
 
         /*
          * Set parameters for the Path\Resolver class
@@ -193,10 +184,10 @@ class Bootstrap
         $this->dm->describe(
             'Path\Resolver',
             array(
-                $config->get('path.application'),
-                $config->get('path.document'),
-                '/',
-                '/tmp',
+                 $config->get('path.application'),
+                 $config->get('path.document'),
+                 '/',
+                 '/tmp',
             )
         );
 
@@ -206,7 +197,7 @@ class Bootstrap
         $this->dm->describe(
             'Security\Cryptograph',
             array(
-                $config->get('security.encryption_key')
+                 $config->get('security.encryption_key')
             )
         );
 
@@ -217,11 +208,17 @@ class Bootstrap
             'Google_Client',
             null,
             array(
-                $injectorFactory->create('setClientId', $config->get('google.client_id')),
-                $injectorFactory->create('setClientSecret', $config->get('google.client_secret')),
-                $injectorFactory->create('setRedirectUri', $config->get('google.return_url')),
-                $injectorFactory->create('setScopes', $config->get('google.scopes')),
+                 $injectorFactory->create('setClientId', $config->get('google.client_id')),
+                 $injectorFactory->create('setClientSecret', $config->get('google.client_secret')),
+                 $injectorFactory->create('setRedirectUri', $config->get('google.return_url')),
+                 $injectorFactory->create('setScopes', $config->get('google.scopes')),
             )
         );
+
+        /*
+         * Set the default locks directory and default class for LockableInterface
+         */
+        $this->dm->implement('Lock\Abstraction\LockableInterface', 'Lock\Lock');
+        $this->dm->describe('Lock\Lock', array($config->get('path.lock')));
     }
 }

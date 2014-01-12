@@ -52,9 +52,9 @@ class File implements AdapterInterface
     public function send($level, $log)
     {
         error_log(
-            trim($log) . "\n",
+            '[' . strtoupper($level) . '] ' . trim($log) . "\n",
             3,
-            $this->dirPath . '/' . trim(filter_var($level, FILTER_SANITIZE_STRING)) . '.' . date('Ymd') . '.log'
+            $this->dirPath . '/' . date('Y-m-d') . '.log'
         );
     }
 }

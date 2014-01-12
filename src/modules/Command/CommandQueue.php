@@ -7,7 +7,7 @@ use Command\Abstraction\CommandInterface;
 /**
  * Class CommandQueue
  *
- * @package GooglePosta\Command
+ * @package Connect\Command
  *
  * @method CommandInterface offsetGet($index)
  * @method CommandInterface current()

@@ -2,6 +2,7 @@
 
 namespace Command\Abstraction;
 
+use Command\CommandFactory;
 use Logger\Abstraction\LoggerAwareInterface;
 use Logger\Abstraction\LoggerInterface;
 
@@ -13,6 +14,11 @@ abstract class AbstractCommand implements CommandInterface, LoggerAwareInterface
     protected $logger;
 
     /**
+     * @var CommandFactory
+     */
+    protected $commandFactory;
+
+    /**
      * Sets a logger instance on the object
      *
      * @param LoggerInterface $logger
@@ -20,5 +26,17 @@ abstract class AbstractCommand implements CommandInterface, LoggerAwareInterface
     public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger;
+    }
+
+    /**
+     * @param CommandFactory $commandFactory
+     *
+     * @return AbstractCommand
+     */
+    public function setCommandFactory($commandFactory)
+    {
+        $this->commandFactory = $commandFactory;
+
+        return $this;
     }
 }

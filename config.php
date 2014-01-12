@@ -83,6 +83,10 @@ return array(
          * Application log directory
          */
         'log'         => __DIR__ . '/logs',
+        /*
+         * Application log directory
+         */
+        'lock'         => __DIR__ . '/data/locks',
     ),
     /*
      * Configuration settings for access to Google APIs.

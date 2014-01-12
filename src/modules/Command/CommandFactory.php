@@ -55,6 +55,8 @@ class CommandFactory implements FactoryInterface
             $clone->setLogger($this->logger);
         }
 
+        $clone->setCommandFactory($this);
+
         return $clone;
     }
 

@@ -29,7 +29,9 @@
         "post-update-cmd" : [],
         "pre-autoload-dump" : [],
         "post-autoload-dump" : [
-            "chmod ugo+x ./bin/googleposta"
+            "chmod ugo+x ./bin/googleposta",
+            "[ -d ./data ] || mkdir ./data && chmod 0777 ./data",
+            "[ -d ./logs ] || mkdir ./logs && chmod 0777 ./logs"
         ]
     }
 }
