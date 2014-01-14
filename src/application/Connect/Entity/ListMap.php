@@ -1,9 +1,9 @@
 <?php
 
-namespace GooglePosta\Entity;
+namespace Connect\Entity;
 
 use Entity\Entity;
-use GooglePosta\Entity\Collection\ListMapGroups;
+use Connect\Entity\Collection\ListMapGroups;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 
@@ -15,7 +15,7 @@ class ListMap extends Entity
     public $groups;
 
     /**
-     * @var \GooglePosta\Entity\Collection\ListMapGroups Laposta group id => ListMapGroup instance
+     * @var \Connect\Entity\Collection\ListMapGroups Laposta group id => ListMapGroup instance
      */
     public $groupElements;
 

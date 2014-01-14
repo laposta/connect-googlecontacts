@@ -57,4 +57,16 @@ class File implements AdapterInterface
             $this->dirPath . '/' . date('Y-m-d') . '.log'
         );
     }
+
+    /**
+     * Default destructor
+     */
+    public function __destruct()
+    {
+        $filePath = $this->dirPath . '/' . date('Y-m-d') . '.log';
+
+        if (file_exists($filePath)) {
+            chmod($filePath, 0666);
+        }
+    }
 }

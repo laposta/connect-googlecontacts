@@ -1,11 +1,11 @@
 <?php
 
-namespace ApiAdapter\Contacts\Abstraction;
+namespace ApiHelper\Contacts\Abstraction;
 
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Group;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Group;
 use DateTime;
 
 interface ApiHelperInterface

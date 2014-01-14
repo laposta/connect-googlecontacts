@@ -1,6 +1,6 @@
 <?php
 
-namespace GooglePosta\Entity;
+namespace Connect\Entity;
 
 use Entity\Entity;
 

@@ -1,17 +1,20 @@
 <?php
 
-namespace ApiAdapter\Contacts;
+namespace ApiHelper\Contacts;
 
-use ApiAdapter\Contacts\Abstraction\ApiHelperInterface;
-use ApiAdapter\Contacts\Abstraction\FactoryInterface as ContactsFactoryInterface;
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\Fields;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Field;
-use ApiAdapter\Contacts\Entity\Group;
+use ApiHelper\Contacts\Abstraction\ApiHelperInterface;
+use ApiHelper\Contacts\Abstraction\FactoryInterface as ContactsFactoryInterface;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\Fields;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\Group;
 use DateTime;
 use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
+use Iterator\ArrayIterator;
+use Iterator\ArrayPathIterator;
+use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 use Laposta as LapostaApi;
 use Laposta_List;
@@ -41,6 +44,11 @@ class Laposta implements ApiHelperInterface
     private $iteratorFactory;
 
     /**
+     * @var ArrayIterator
+     */
+    private $fieldCache;
+
+    /**
      * Default constructor
      *
      * @param ContactsFactoryInterface $factory
@@ -52,6 +60,8 @@ class Laposta implements ApiHelperInterface
     ) {
         $this->factory         = $factory;
         $this->iteratorFactory = $iteratorFactory;
+
+        $this->fieldCache = new ArrayIterator();
     }
 
     /**
@@ -192,6 +202,7 @@ class Laposta implements ApiHelperInterface
         $result   = $this->iteratorFactory->createArrayPathIterator($result);
 
         $field->definition->tag = $result['field.tag'];
+        $field->lapId           = $result['field.field_id'];
 
         return $result['field.field_id'];
     }
@@ -264,13 +275,78 @@ class Laposta implements ApiHelperInterface
     /**
      * Convert data from the source into a native contact object.
      *
-     * @param array $data
+     * @param array             $data
+     * @param LinkedKeyIterator $fieldMap
      *
      * @return Contact
      */
-    public function convertToContact(array $data)
+    public function convertToContact(array $data, LinkedKeyIterator $fieldMap)
     {
-        return $this->factory->createContact();
+        /*
+         * $data = {
+                "member_id": "5t8zgm63qk",
+                "list_id": "v5hcnwzyqo",
+                "email": "angus.mcbiefstuk@codeblanche.com",
+                "custom_fields": {
+					"birthdate": "1982-03-05",
+					"surname": "McBiefstuk",
+					"firstname": "Angus",
+					"organization": "Black Angus",
+					"streetaddress": "Grote Boterbloem 41",
+					"postcode": "1991LJ",
+					"city": "Velserbroek",
+					"country": "Netherlands",
+					"website": "http://codeblanche.com",
+					"notes": "Angus is the best!",
+					"anotherfield": "with some other information",
+					"whatthe": "other field"
+                }
+            };
+         */
+
+        /** @var $contact Contact */
+        $contact  = $this->factory->createContact();
+        $iterator = new ArrayPathIterator($data);
+        $groupId  = $iterator['list_id'];
+        $tagMap   = $this->getFieldsMap($groupId);
+
+        $contact->email = $iterator['email'];
+        $contact->lapId = $iterator['member_id'];
+
+        foreach ($iterator['custom_fields'] as $key => $value) {
+            $type = $key;
+
+            if (isset($tagMap[$key]) && isset($fieldMap[$tagMap[$key]])) {
+                $type = $fieldMap[$tagMap[$key]];
+            }
+
+            $contact->fields[$type] = $this->factory->createField($type, $value);
+        }
+
+        return $contact;
+    }
+
+    /**
+     * @param string $groupId
+     *
+     * @return \Iterator\ArrayIterator
+     */
+    protected function getFieldsMap($groupId)
+    {
+        if (isset($this->fieldCache[$groupId])) {
+            return $this->fieldCache[$groupId];
+        }
+
+        $lapField = new \Laposta_Field($groupId);
+        $result   = $lapField->all();
+        $fields   = new ArrayIterator();
+
+        foreach ($result['data'] as $item) {
+            $key          = trim($item['field']['tag'], '{}');
+            $fields[$key] = $item['field']['field_id'];
+        };
+
+        return $this->fieldCache[$groupId] = $fields;
     }
 
     /**
@@ -293,6 +369,9 @@ class Laposta implements ApiHelperInterface
         return $this->hasMoreContacts;
     }
 
+    /**
+     * Remove all lists.
+     */
     public function removeLists()
     {
         $list   = new Laposta_List();

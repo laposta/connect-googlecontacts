@@ -1,16 +1,16 @@
 <?php
 
-namespace ApiAdapter\Contacts;
+namespace ApiHelper\Contacts;
 
-use ApiAdapter\Contacts\Abstraction\FactoryInterface;
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\FieldDefinitions;
-use ApiAdapter\Contacts\Entity\Collection\Fields;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Field;
-use ApiAdapter\Contacts\Entity\FieldDefinition;
-use ApiAdapter\Contacts\Entity\Group;
+use ApiHelper\Contacts\Abstraction\FactoryInterface;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\FieldDefinitions;
+use ApiHelper\Contacts\Entity\Collection\Fields;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\FieldDefinition;
+use ApiHelper\Contacts\Entity\Group;
 
 class Factory implements FactoryInterface
 {

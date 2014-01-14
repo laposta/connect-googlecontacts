@@ -1,8 +1,8 @@
 <?php
 
-namespace GooglePosta\Entity;
+namespace Connect\Entity;
 
-use GooglePosta\Entity\Abstraction\SecureEntity;
+use Connect\Entity\Abstraction\SecureEntity;
 
 class ClientData extends SecureEntity
 {
@@ -27,7 +27,7 @@ class ClientData extends SecureEntity
     public $returnUrl;
 
     /**
-     * @var \GooglePosta\Entity\GoogleTokenSet
+     * @var \Connect\Entity\GoogleTokenSet
      */
     public $googleTokenSet;
 

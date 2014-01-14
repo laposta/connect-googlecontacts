@@ -1,17 +1,19 @@
 <?php
 
-namespace GooglePosta\MVC\Model;
+namespace Connect\MVC\Model;
 
 use Command\CommandFactory;
-use GooglePosta\Command\LoadClientData;
-use GooglePosta\Command\LoadClientMap;
-use GooglePosta\Command\StoreClientData;
-use GooglePosta\Command\StoreClientMap;
-use GooglePosta\Command\Sync\SyncFromGoogle;
-use GooglePosta\Command\Sync\SyncFromLaposta;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\Entity\ListMap;
-use GooglePosta\MVC\Base\Model;
+use Connect\Command\LoadClientData;
+use Connect\Command\LoadClientMap;
+use Connect\Command\PurgeClientMap;
+use Connect\Command\StoreClientData;
+use Connect\Command\StoreClientMap;
+use Connect\Command\Sync\SyncFromGoogle;
+use Connect\Command\Sync\SyncFromLaposta;
+use Connect\Entity\ClientData;
+use Connect\Entity\ListMap;
+use Connect\MVC\Base\Model;
+use Exception;
 use Logger\Abstraction\LoggerInterface;
 use RuntimeException;
 
@@ -50,8 +52,9 @@ class Sync extends Model
      * @param string $email    Laposta account email
      * @param string $apiToken Laposta API token
      *
+     * @throws \RuntimeException
+     * @throws \Exception
      * @return $this
-     * @throws RuntimeException
      */
     public function importFromGoogle($email, $apiToken)
     {
@@ -65,11 +68,59 @@ class Sync extends Model
 
         $this->loadClientMap();
 
-        /** @var $command SyncFromGoogle */
-        $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromGoogle');
-        $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+        try {
+            /** @var $command SyncFromGoogle */
+            $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromGoogle');
+            $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+        }
+        catch (Exception $e) {
+            $this->persist();
+
+            throw $e;
+        }
 
         $this->persist();
+
+        return $this;
+    }
+
+
+    /**
+     * Reset and remove all lists from Laposta.
+     *
+     * @param string $email    Laposta account email
+     * @param string $apiToken Laposta API token
+     *
+     * @throws \RuntimeException
+     * @throws \Exception
+     * @return $this
+     */
+    public function resetLaposta($email, $apiToken)
+    {
+        $this->clientToken = $this->createClientToken($email);
+
+        $this->loadClientData();
+
+        if ($this->clientData->lapostaApiToken !== $apiToken) {
+            throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
+        }
+
+        $this->loadClientMap();
+
+        try {
+            /** @var $command SyncFromGoogle */
+            $command = $this->getCommandFactory()->create('Connect\Command\Sync\RemoveAllFromLaposta');
+            $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+
+            $this->persist();
+
+            /** @var $command PurgeClientMap */
+            $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientMap');
+            $command->setClientToken($this->clientToken)->execute();
+        }
+        catch (Exception $e) {
+            throw $e;
+        }
 
         return $this;
     }
@@ -80,8 +131,9 @@ class Sync extends Model
      * @param string $clientToken
      * @param string $eventsJson
      *
+     * @throws \RuntimeException
+     * @throws \Exception
      * @return $this
-     * @throws RuntimeException
      */
     public function consumeEvents($clientToken, $eventsJson)
     {
@@ -106,9 +158,18 @@ class Sync extends Model
 
         $this->loadClientMap();
 
-        /** @var $command SyncFromLaposta */
-        $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromLaposta');
-        $command->setClientData($this->clientData)->setListMap($this->clientMap)->setEventList($decoded)->execute();
+        try {
+            /** @var $command SyncFromLaposta */
+            $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromLaposta');
+            $command->setClientData($this->clientData)->setListMap($this->clientMap)->setEventList($decoded)->execute();
+        }
+        catch (Exception $e) {
+            $this->persist();
+
+            throw $e;
+        }
+
+        $this->persist();
 
         return $this;
     }

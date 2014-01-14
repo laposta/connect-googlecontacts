@@ -1,9 +1,9 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace Connect\MVC;
 
-use GooglePosta\MVC\Base\Controller;
-use GooglePosta\MVC\View;
+use Connect\MVC\Base\Controller;
+use Connect\MVC\View;
 
 /**
  * Class Main

@@ -1,12 +1,12 @@
 <?php
 
-namespace GooglePosta\Command;
+namespace Connect\Command;
 
 use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
-use GooglePosta\Entity\ClientData;
+use Connect\Entity\ClientData;
 use RuntimeException;
 use Security\Cryptograph;
 
@@ -50,7 +50,7 @@ class StoreClientData extends AbstractCommand
     }
 
     /**
-     * @param \GooglePosta\Entity\ClientData $clientData
+     * @param \Connect\Entity\ClientData $clientData
      *
      * @return StoreClientData
      */

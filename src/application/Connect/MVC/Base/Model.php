@@ -1,9 +1,9 @@
 <?php
 
-namespace GooglePosta\MVC\Base;
+namespace Connect\MVC\Base;
 
 use Command\CommandFactory;
-use GooglePosta\Command\CreateClientToken;
+use Connect\Command\CreateClientToken;
 use RuntimeException;
 
 class Model extends \MVC\Model
@@ -47,7 +47,7 @@ class Model extends \MVC\Model
      */
     protected function validateEmail($email)
     {
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw new RuntimeException("Expected a valid email address. Given '$email' is not valid.");
         }
 
@@ -62,7 +62,7 @@ class Model extends \MVC\Model
      */
     protected function validateUrl($url)
     {
-        if (filter_var($url, FILTER_VALIDATE_EMAIL)) {
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
             throw new RuntimeException("Expected a valid URL. Given '$url' is not valid.");
         }
 

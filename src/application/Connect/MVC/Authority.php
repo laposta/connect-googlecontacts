@@ -1,12 +1,12 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace Connect\MVC;
 
 use Config\Config;
-use GooglePosta\MVC\Base\Controller;
-use GooglePosta\MVC\Base\Model;
-use GooglePosta\MVC\Base\View;
-use GooglePosta\MVC\Model\Authority as AuthorityModel;
+use Connect\MVC\Base\Controller;
+use Connect\MVC\Base\Model;
+use Connect\MVC\Base\View;
+use Connect\MVC\Model\Authority as AuthorityModel;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use Web\Response\Status;

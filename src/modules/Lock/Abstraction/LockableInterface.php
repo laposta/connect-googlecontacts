@@ -1,6 +1,6 @@
 <?php
 
-namespace Lock;
+namespace Lock\Abstraction;
 
 interface LockableInterface
 {

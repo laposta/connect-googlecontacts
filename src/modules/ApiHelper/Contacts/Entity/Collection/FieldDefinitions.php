@@ -1,9 +1,9 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity\Collection;
+namespace ApiHelper\Contacts\Entity\Collection;
 
-use ApiAdapter\Contacts\Abstraction\AbstractEntityCollection;
-use ApiAdapter\Contacts\Entity\FieldDefinition;
+use ApiHelper\Contacts\Abstraction\AbstractEntityCollection;
+use ApiHelper\Contacts\Entity\FieldDefinition;
 use InvalidArgumentException;
 
 /**

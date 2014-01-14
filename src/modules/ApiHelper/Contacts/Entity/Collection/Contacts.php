@@ -1,10 +1,10 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity\Collection;
+namespace ApiHelper\Contacts\Entity\Collection;
 
-use ApiAdapter\Contacts\Abstraction\AbstractEntityCollection;
-use ApiAdapter\Contacts\Abstraction\FactoryInterface;
-use ApiAdapter\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Abstraction\AbstractEntityCollection;
+use ApiHelper\Contacts\Abstraction\FactoryInterface;
+use ApiHelper\Contacts\Entity\Contact;
 use InvalidArgumentException;
 
 /**

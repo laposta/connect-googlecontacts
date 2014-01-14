@@ -30,7 +30,7 @@
         "pre-autoload-dump" : [],
         "post-autoload-dump" : [
             "chmod ugo+x ./bin/googleposta",
-            "[ -d ./data ] || mkdir ./data && chmod 0777 ./data",
+            "[ -d ./data ] || mkdir ./data && chmod 0777 ./data && chmod 0777 ./data/locks && chmod 0777 ./data/maps",
             "[ -d ./logs ] || mkdir ./logs && chmod 0777 ./logs"
         ]
     }

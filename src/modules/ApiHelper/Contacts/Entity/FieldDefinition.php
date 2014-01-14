@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity;
+namespace ApiHelper\Contacts\Entity;
 
 use Entity\Entity;
 

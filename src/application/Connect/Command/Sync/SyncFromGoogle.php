@@ -1,26 +1,26 @@
 <?php
 
-namespace GooglePosta\Command\Sync;
+namespace Connect\Command\Sync;
 
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\Fields;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Field;
-use ApiAdapter\Contacts\Entity\Group;
-use ApiAdapter\Contacts\Google;
-use ApiAdapter\Contacts\Laposta;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\Fields;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\Group;
+use ApiHelper\Contacts\Google;
+use ApiHelper\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Config\Config;
+use Connect\Entity\ClientData;
+use Connect\Entity\ListMap;
+use Connect\Entity\ListMapGroup;
 use DateTime;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\Entity\ListMap;
-use GooglePosta\Entity\ListMapGroup;
 use Iterator\Abstraction\FactoryInterface;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
-use Lock\LockableInterface;
+use Lock\Abstraction\LockableInterface;
 
 class SyncFromGoogle extends AbstractCommand
 {
@@ -65,10 +65,11 @@ class SyncFromGoogle extends AbstractCommand
     private $lock;
 
     /**
-     * @param Google           $google
-     * @param Laposta          $laposta
-     * @param Config           $config
-     * @param FactoryInterface $iteratorFactory
+     * @param Google            $google
+     * @param Laposta           $laposta
+     * @param Config            $config
+     * @param FactoryInterface  $iteratorFactory
+     * @param LockableInterface $lock
      */
     function __construct(
         Google $google,
@@ -125,7 +126,7 @@ class SyncFromGoogle extends AbstractCommand
     }
 
     /**
-     * @param \GooglePosta\Entity\ClientData $clientData
+     * @param \Connect\Entity\ClientData $clientData
      *
      * @return SyncFromGoogle
      */
@@ -137,7 +138,7 @@ class SyncFromGoogle extends AbstractCommand
     }
 
     /**
-     * @return \GooglePosta\Entity\ClientData
+     * @return \Connect\Entity\ClientData
      */
     public function getClientData()
     {
@@ -254,7 +255,6 @@ class SyncFromGoogle extends AbstractCommand
                 );
 
                 $groupElements->contacts[$contact->lapId] = $contact->gId;
-                $this->listMap->emails[$lapContactId]     = $contact->email;
             }
             else {
                 $this->logger->debug(
@@ -323,9 +323,6 @@ class SyncFromGoogle extends AbstractCommand
 
         $this->clientData->lastImport = time();
 
-        /*
-        $this->laposta->removeLists();
-        /*/
         while ($this->google->hasMoreGroups()) {
             $this->synchronizeGroups($this->google->getGroups());
         }
@@ -335,14 +332,10 @@ class SyncFromGoogle extends AbstractCommand
 
         while ($this->google->hasMoreContacts()) {
             $this->synchronizeContacts($this->google->getContacts());
-
-            break; // TODO(mertenvg): remove break
         }
 
         $this->logger->info('Re-enabling hooks for all groups');
         $this->laposta->enableHooks($this->listMap->hooks);
-
-        //*/
 
         return $this;
     }

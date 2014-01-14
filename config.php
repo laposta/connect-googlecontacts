@@ -41,7 +41,7 @@ return array(
     /*
      * Application Hostname
      */
-    'hostname'     => 'googleposta.laposta.nl',
+    'hostname'     => 'connect.laposta.nl',
     /*
      * Application uses ssl (https)
      */
@@ -103,7 +103,7 @@ return array(
         /*
          * The url google will return to after consent screen
          */
-        'return_url'    => 'https://googleposta.laposta.nl/authority/',
+        'return_url'    => 'https://connect.laposta.nl/authority/',
         /*
          * The google api scopes being used by this application.
          */

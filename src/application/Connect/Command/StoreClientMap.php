@@ -1,12 +1,12 @@
 <?php
 
-namespace GooglePosta\Command;
+namespace Connect\Command;
 
 use Command\Abstraction\AbstractCommand;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
-use GooglePosta\Entity\ListMap;
+use Connect\Entity\ListMap;
 use RuntimeException;
 
 class StoreClientMap extends AbstractCommand

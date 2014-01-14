@@ -1,8 +1,8 @@
 <?php
 
-namespace GooglePosta\MVC\View;
+namespace Connect\MVC\View;
 
-use GooglePosta\MVC\Base\View;
+use Connect\MVC\Base\View;
 
 class Cli extends View
 {

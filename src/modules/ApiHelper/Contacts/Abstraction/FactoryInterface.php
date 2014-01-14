@@ -1,8 +1,8 @@
 <?php
 
-namespace ApiAdapter\Contacts\Abstraction;
+namespace ApiHelper\Contacts\Abstraction;
 
-use ApiAdapter\Contacts\Entity\FieldDefinition;
+use ApiHelper\Contacts\Entity\FieldDefinition;
 use Entity\Entity;
 use Traversable;
 

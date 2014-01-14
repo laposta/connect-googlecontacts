@@ -1,26 +1,26 @@
 <?php
 
-namespace GooglePosta\Command\Sync;
+namespace Connect\Command\Sync;
 
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\Fields;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Field;
-use ApiAdapter\Contacts\Entity\Group;
-use ApiAdapter\Contacts\Google;
-use ApiAdapter\Contacts\Laposta;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\Fields;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\Group;
+use ApiHelper\Contacts\Google;
+use ApiHelper\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Config\Config;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\Entity\ListMap;
-use GooglePosta\Entity\ListMapGroup;
+use Connect\Entity\ClientData;
+use Connect\Entity\ListMap;
+use Connect\Entity\ListMapGroup;
 use Iterator\Abstraction\FactoryInterface;
 use Iterator\ArrayPathIterator;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
-use Lock\LockableInterface;
+use Lock\Abstraction\LockableInterface;
 use RuntimeException;
 
 class SyncFromLaposta extends AbstractCommand
@@ -132,7 +132,7 @@ class SyncFromLaposta extends AbstractCommand
     }
 
     /**
-     * @param \GooglePosta\Entity\ClientData $clientData
+     * @param \Connect\Entity\ClientData $clientData
      *
      * @return SyncFromLaposta
      */
@@ -144,7 +144,7 @@ class SyncFromLaposta extends AbstractCommand
     }
 
     /**
-     * @return \GooglePosta\Entity\ClientData
+     * @return \Connect\Entity\ClientData
      */
     public function getClientData()
     {
@@ -343,6 +343,8 @@ class SyncFromLaposta extends AbstractCommand
                 /*
                  * Ignore groups not originating from google contacts.
                  */
+                $this->logger->notice("Unrecognized group '$listId'. Skipping event.");
+
                 return;
 
                 /*
@@ -357,9 +359,12 @@ class SyncFromLaposta extends AbstractCommand
             $groupId   = $this->listMap->groups[$listId];
 
             if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
-                $contact = $this->laposta->convertToContact($event['data']);
+                $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
                 $this->google->addContact($groupId, $contact);
-                $this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
+
+                //$this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
+
+                $this->logger->notice("Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'.");
 
                 return;
             }
@@ -368,28 +373,23 @@ class SyncFromLaposta extends AbstractCommand
 
             if ($event['event'] === 'subscribed') {
                 $this->google->addContactToGroup($contactId, $groupId);
+
+                $this->logger->info("Added member '$contactId' to group '$groupId'.");
             }
             else if ($event['event'] === 'modified') {
-                $contact = $this->google->getContact(null);
-
-                /** @var $field Field */
-                foreach ($contact->fields as $field) {
-                    $key = trim($field->definition->tag, '{}');
-
-                    if (isset($event['data.custom_fields.' . $key])) {
-                        $field->value = $event['data.custom_fields.' . $key];
-                    }
-                }
-
+                $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
+                $contact->gId = $this->listMap->groupElements[$listId]->contacts[$memberId];
                 $this->google->updateContact($groupId, $contact);
+
+                $this->logger->info("Updated member '$contactId'.");
             }
             else if ($event['event'] === 'deactivated') {
                 $this->google->removeContactFromGroup($contactId, $groupId);
+
+                $this->logger->info("Removed member '$contactId' from group '$groupId'.");
             }
 
-            $contact = $this->google->getContact($contactId);
-
-            $contact->dump();
+//            $this->google->getContact($contactId)->dump();
         }
     }
 

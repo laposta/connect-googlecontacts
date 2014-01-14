@@ -1,13 +1,13 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace Connect\MVC;
 
 use Config\Config;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\MVC\Base\Controller;
-use GooglePosta\MVC\Base\Model;
-use GooglePosta\MVC\Base\View;
-use GooglePosta\MVC\Model\Sync as SyncModel;
+use Connect\Entity\ClientData;
+use Connect\MVC\Base\Controller;
+use Connect\MVC\Base\Model;
+use Connect\MVC\Base\View;
+use Connect\MVC\Model\Sync as SyncModel;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use RuntimeException;
@@ -58,6 +58,9 @@ class Sync extends Controller
         if ($action === 'IMPORT') {
             $this->importFromGoogle();
         }
+        else if ($action === 'RESET') {
+            $this->resetLaposta();
+        }
         else if ($action === 'CONSUME-EVENTS') {
             $this->consumeEvents();
         }
@@ -70,7 +73,6 @@ class Sync extends Controller
 
     /**
      * @return Sync
-     * @throws \RuntimeException
      */
     protected function importFromGoogle()
     {
@@ -90,7 +92,25 @@ class Sync extends Controller
 
     /**
      * @return Sync
-     * @throws \RuntimeException
+     */
+    protected function resetLaposta()
+    {
+        $this->model->resetLaposta(
+            $this->request->post('email'),
+            $this->request->post('lapostaApiToken')
+        );
+
+        $returnUrl = $this->request->post('returnUrl');
+
+        if (!empty($returnUrl)) {
+            $this->redirect($returnUrl);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Sync
      */
     protected function consumeEvents()
     {

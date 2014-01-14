@@ -1,17 +1,17 @@
 <?php
 
-namespace GooglePosta\MVC\Model;
+namespace Connect\MVC\Model;
 
 use Command\CommandFactory;
 use DirectoryIterator;
-use GooglePosta\Command\LoadClientData;
-use GooglePosta\Command\LoadClientMap;
-use GooglePosta\Command\StoreClientData;
-use GooglePosta\Command\StoreClientMap;
-use GooglePosta\Command\Sync\SyncFromGoogle;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\Entity\ListMap;
-use GooglePosta\MVC\Base\Model;
+use Connect\Command\LoadClientData;
+use Connect\Command\LoadClientMap;
+use Connect\Command\StoreClientData;
+use Connect\Command\StoreClientMap;
+use Connect\Command\Sync\SyncFromGoogle;
+use Connect\Entity\ClientData;
+use Connect\Entity\ListMap;
+use Connect\MVC\Base\Model;
 use Logger\Abstraction\LoggerInterface;
 use RegexIterator;
 use RuntimeException;

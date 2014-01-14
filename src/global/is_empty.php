@@ -10,7 +10,7 @@ if (!function_exists('is_empty')) {
      *
      * @return bool
      */
-    function is_empty(&$var)
+    function is_empty($var)
     {
         return empty($var);
     }

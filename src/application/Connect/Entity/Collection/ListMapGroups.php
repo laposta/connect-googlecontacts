@@ -1,9 +1,9 @@
 <?php
 
-namespace GooglePosta\Entity\Collection;
+namespace Connect\Entity\Collection;
 
-use ApiAdapter\Contacts\Abstraction\AbstractEntityCollection;
-use GooglePosta\Entity\ListMapGroup;
+use ApiHelper\Contacts\Abstraction\AbstractEntityCollection;
+use Connect\Entity\ListMapGroup;
 use InvalidArgumentException;
 
 /**

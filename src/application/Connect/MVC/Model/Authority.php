@@ -1,15 +1,15 @@
 <?php
 
-namespace GooglePosta\MVC\Model;
+namespace Connect\MVC\Model;
 
 use Command\CommandFactory;
-use GooglePosta\Command\ConfirmApiBridge;
-use GooglePosta\Command\InitializeApiBridge;
-use GooglePosta\Command\LoadClientData;
-use GooglePosta\Command\PurgeClientData;
-use GooglePosta\Command\StoreClientData;
-use GooglePosta\Entity\ClientData;
-use GooglePosta\MVC\Base\Model;
+use Connect\Command\ConfirmApiBridge;
+use Connect\Command\InitializeApiBridge;
+use Connect\Command\LoadClientData;
+use Connect\Command\PurgeClientData;
+use Connect\Command\StoreClientData;
+use Connect\Entity\ClientData;
+use Connect\MVC\Base\Model;
 use RuntimeException;
 use Session\Session;
 
@@ -26,7 +26,7 @@ class Authority extends Model
     private $clientToken;
 
     /**
-     * @var \GooglePosta\Entity\ClientData
+     * @var \Connect\Entity\ClientData
      */
     private $clientData;
 

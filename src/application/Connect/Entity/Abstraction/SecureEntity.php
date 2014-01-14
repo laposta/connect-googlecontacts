@@ -1,6 +1,6 @@
 <?php
 
-namespace GooglePosta\Entity\Abstraction;
+namespace Connect\Entity\Abstraction;
 
 use Entity\Entity;
 use Security\CryptographInterface;

@@ -1,13 +1,13 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity;
+namespace ApiHelper\Contacts\Entity;
 
 use Entity\Entity;
 
 class Field extends Entity
 {
     /**
-     * @var \ApiAdapter\Contacts\Entity\FieldDefinition
+     * @var \ApiHelper\Contacts\Entity\FieldDefinition
      */
     public $definition;
 
@@ -15,4 +15,9 @@ class Field extends Entity
      * @var string
      */
     public $value;
+
+    /**
+     * @var string
+     */
+    public $lapId;
 } 

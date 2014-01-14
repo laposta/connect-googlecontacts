@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiAdapter\Depend;
+namespace ApiHelper\Depend;
 
 use Depend\Abstraction\ModuleInterface;
 use Depend\Manager;

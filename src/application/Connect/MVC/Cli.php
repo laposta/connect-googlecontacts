@@ -1,11 +1,11 @@
 <?php
 
-namespace GooglePosta\MVC;
+namespace Connect\MVC;
 
 use Config\Config;
-use GooglePosta\MVC\Base\Controller;
-use GooglePosta\MVC\Model\Cli as CliModel;
-use GooglePosta\MVC\View\Cli as CliView;
+use Connect\MVC\Base\Controller;
+use Connect\MVC\Model\Cli as CliModel;
+use Connect\MVC\View\Cli as CliView;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use Web\Web;

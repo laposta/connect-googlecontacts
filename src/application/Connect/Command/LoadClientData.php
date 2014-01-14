@@ -1,13 +1,13 @@
 <?php
 
-namespace GooglePosta\Command;
+namespace Connect\Command;
 
 use Command\Abstraction\AbstractCommand;
 use Command\Abstraction\CommandInterface;
 use Config\Config;
 use DataStore\Adapter\File;
 use DataStore\DataStore;
-use GooglePosta\Entity\ClientData;
+use Connect\Entity\ClientData;
 use RuntimeException;
 use Security\Cryptograph;
 

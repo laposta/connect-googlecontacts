@@ -1,8 +1,8 @@
 <?php
 
-namespace GooglePosta\Entity;
+namespace Connect\Entity;
 
-use GooglePosta\Entity\Abstraction\SecureEntity;
+use Connect\Entity\Abstraction\SecureEntity;
 
 class GoogleTokenSet extends SecureEntity
 {

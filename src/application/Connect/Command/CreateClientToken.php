@@ -1,6 +1,6 @@
 <?php
 
-namespace GooglePosta\Command;
+namespace Connect\Command;
 
 use Command\Abstraction\AbstractCommand;
 

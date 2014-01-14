@@ -3,6 +3,7 @@
 namespace Lock;
 
 use InvalidArgumentException;
+use Lock\Abstraction\LockableInterface;
 
 class Lock implements LockableInterface
 {

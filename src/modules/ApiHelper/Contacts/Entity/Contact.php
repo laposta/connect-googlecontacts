@@ -1,6 +1,6 @@
 <?php
 
-namespace ApiAdapter\Contacts\Entity;
+namespace ApiHelper\Contacts\Entity;
 
 use ArrayIterator;
 use Entity\Entity;
@@ -10,30 +10,10 @@ class Contact extends Entity
     /**
      * @var string
      */
-    public $title;
-
-    /**
-     * @var string
-     */
     public $email;
 
     /**
-     * @var string
-     */
-    public $givenName;
-
-    /**
-     * @var string
-     */
-    public $familyName;
-
-    /**
-     * @var string
-     */
-    public $fullName;
-
-    /**
-     * @var \ApiAdapter\Contacts\Entity\Collection\Fields
+     * @var \ApiHelper\Contacts\Entity\Collection\Fields
      */
     public $fields;
 

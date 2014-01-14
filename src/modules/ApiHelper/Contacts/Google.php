@@ -1,20 +1,20 @@
 <?php
 
-namespace ApiAdapter\Contacts;
+namespace ApiHelper\Contacts;
 
-use ApiAdapter\Contacts\Abstraction\ApiHelperInterface;
-use ApiAdapter\Contacts\Abstraction\FactoryInterface as ContactsFactoryInterface;
-use ApiAdapter\Contacts\Entity\Collection\Contacts;
-use ApiAdapter\Contacts\Entity\Collection\Fields;
-use ApiAdapter\Contacts\Entity\Collection\Groups;
-use ApiAdapter\Contacts\Entity\Contact;
-use ApiAdapter\Contacts\Entity\Group;
+use ApiHelper\Contacts\Abstraction\ApiHelperInterface;
+use ApiHelper\Contacts\Abstraction\FactoryInterface as ContactsFactoryInterface;
+use ApiHelper\Contacts\Entity\Collection\Contacts;
+use ApiHelper\Contacts\Entity\Collection\Fields;
+use ApiHelper\Contacts\Entity\Collection\Groups;
+use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Group;
 use ArrayIterator;
+use Connect\Entity\GoogleTokenSet;
 use DateTime;
 use Google_Client;
 use Google_Http_Request;
 use Google_Http_REST;
-use GooglePosta\Entity\GoogleTokenSet;
 use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
 use RuntimeException;
 use SimpleXMLElement;
@@ -217,8 +217,8 @@ class Google implements ApiHelperInterface
 
             $id   = $entry['id.$t'];
             $data = array(
-                'title'      => $entry['title.$t'],
                 'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
+                'title'      => $entry['title.$t'],
                 'givenName'  => $entry['gd$name.gd$givenName.$t'],
                 'familyName' => $entry['gd$name.gd$familyName.$t'],
                 'fullName'   => $entry['gd$name.gd$fullName.$t'],
@@ -466,11 +466,7 @@ class Google implements ApiHelperInterface
 
         $entry = $this->iteratorFactory->createArrayPathIterator($response['entry']);
         $data  = array(
-            'title'      => $entry['title.$t'],
             'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
-            'givenName'  => $entry['gd$name.gd$givenName.$t'],
-            'familyName' => $entry['gd$name.gd$familyName.$t'],
-            'fullName'   => $entry['gd$name.gd$fullName.$t'],
             'fields'     => $this->normalizeFields($entry),
             'gLinks'     => $this->normalizeLinks($entry['link']),
             'gEtag'      => $entry['gd$etag'],
@@ -512,32 +508,44 @@ class Google implements ApiHelperInterface
      */
     public function addContact($groupId, Contact $contact)
     {
-        $xmlString = "<atom:entry xmlns:atom='http://www.w3.org/2005/Atom'
-    xmlns:gd='http://schemas.google.com/g/2005'>
-  <atom:category scheme='http://schemas.google.com/g/2005#kind'
-    term='http://schemas.google.com/contact/2008#contact'/>
-  <gd:name>
-     <gd:givenName>{$contact->givenName}</gd:givenName>
-     <gd:familyName>{$contact->familyName}</gd:familyName>
-     <gd:fullName>{$contact->givenName} {$contact->familyName}</gd:fullName>
-  </gd:name>
-  <atom:content type='text'></atom:content>
-  <gd:email rel='http://schemas.google.com/g/2005#work' primary='true' address='{$contact->email}' displayName='{$contact->title}'/>
-  <gd:structuredPostalAddress
-      rel='http://schemas.google.com/g/2005#work'
-      primary='true'>
-    <gd:city>Mountain View</gd:city>
-    <gd:street>1600 Amphitheatre Pkwy</gd:street>
-    <gd:region>CA</gd:region>
-    <gd:postcode>94043</gd:postcode>
-    <gd:country>United States</gd:country>
-    <gd:formattedAddress>
-      1600 Amphitheatre Pkwy Mountain View
-    </gd:formattedAddress>
-  </gd:structuredPostalAddress>
+        $xmlString = "<atom:entry xmlns:atom='http://www.w3.org/2005/Atom' xmlns:gd='http://schemas.google.com/g/2005'>
+    <atom:category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/contact/2008#contact'/>
+    <gd:name>
+        <gd:givenName></gd:givenName>
+        <gd:familyName></gd:familyName>
+        <gd:fullName></gd:fullName>
+    </gd:name>
+    <atom:title type='text'></atom:title>
+    <atom:content type='text'></atom:content>
+    <gd:email label='Email' primary='true' address=''/>
+    <gd:structuredPostalAddress label='Address'>
+        <gd:formattedAddress></gd:formattedAddress>
+        <gd:street></gd:street>
+        <gd:postcode></gd:postcode>
+        <gd:city></gd:city>
+        <gd:country code='NL'></gd:country>
+    </gd:structuredPostalAddress>
+    <gContact:website href='' label='Website'/>
+    <gContact:birthday when=''/>
+    <gd:organization rel='http://schemas.google.com/g/2005#other'>
+        <gd:orgName></gd:orgName>
+        <gd:orgTitle></gd:orgTitle>
+    </gd:organization>
+    <gContact:groupMembershipInfo deleted='false' href='{$groupId}'/>
 </atom:entry>";
 
-        $contact->gId = $this->postContactXml($xmlString);
+        $contactNode = simplexml_load_string($xmlString);
+
+//    <gContact:userDefinedField key='Another field' value='with some other information'/>
+//    <gContact:userDefinedField key='What the' value='other field'/>
+
+        var_dump("Adding contact");
+
+        $contact->dump(false);
+
+        echo $contactNode->asXML();
+
+//        $contact->gId = $this->postContactXml($xmlString);
 
         return $contact;
     }
@@ -553,12 +561,43 @@ class Google implements ApiHelperInterface
     public function updateContact($groupId, Contact $contact)
     {
         $contactNode = $this->getContactXml($contact->gId);
+
+        /*
+         * statically mapped fields
+         *
+         * 'gContact:birthday.@when'                => 'birth_date',
+         * 'gd:name.gd:familyName'                  => 'family_name',
+         * 'gd:name.gd:givenName'                   => 'given_name',
+         * 'gd:organization.gd:orgName'             => 'organization',
+         * 'gd:organization.gd:orgTitle'            => 'position',
+         * 'gd:phoneNumber'                         => 'phone',
+         * 'gd:structuredPostalAddress.gd:street'   => 'address_street',
+         * 'gd:structuredPostalAddress.gd:postcode' => 'address_postcode',
+         * 'gd:structuredPostalAddress.gd:city'     => 'address_city',
+         * 'gd:structuredPostalAddress.gd:country'  => 'address_country',
+         * 'gContact:website.@href'                 => 'website',
+         * 'content'                                => 'notes',
+         */
+
+        var_dump("Updating contact");
+
+        $contact->dump(false);
+
+        echo $contactNode->asXML();
+
+        return $contact;
+
 //        'title'      => $entry['title.$t'],
 //        'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
 //        'givenName'  => $entry['gd$name.gd$givenName.$t'],
 //        'familyName' => $entry['gd$name.gd$familyName.$t'],
 //        'fullName'   => $entry['gd$name.gd$fullName.$t'],
 //        'fields'     => $this->normalizeFields($entry),
+    }
+
+    protected function applyContactDefinitionToXml(SimpleXMLElement $entry, Contact $contact)
+    {
+
     }
 
     /**
