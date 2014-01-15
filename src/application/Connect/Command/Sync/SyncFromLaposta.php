@@ -338,37 +338,36 @@ class SyncFromLaposta extends AbstractCommand
         $listId   = $event['data.list_id'];
         $memberId = $event['data.member_id'];
 
+        if (!isset($this->listMap->groups[$listId])) {
+            /*
+             * Ignore groups not originating from google contacts.
+             */
+            $this->logger->notice("Unrecognized group '$listId'. Skipping event.");
+
+            return;
+
+            /*
+             * Or create it at your own risk.
+             *
+            $group = $this->laposta->getGroup($listId);
+            $this->google->addGroup($group);
+            $this->listMap->groups[$listId] = $group->gId;
+            */
+        }
+
+        $groupId   = $this->listMap->groups[$listId];
+
+        if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
+            $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
+            $this->google->addContact($groupId, $contact);
+            $this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
+
+            $this->logger->notice("Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'.");
+
+            return;
+        }
+
         if (isset($this->listMap->groupElements[$listId]) && isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
-            if (!isset($this->listMap->groups[$listId])) {
-                /*
-                 * Ignore groups not originating from google contacts.
-                 */
-                $this->logger->notice("Unrecognized group '$listId'. Skipping event.");
-
-                return;
-
-                /*
-                 * Or create it at your own risk.
-                 *
-                $group = $this->laposta->getGroup($listId);
-                $this->google->addGroup($group);
-                $this->listMap->groups[$listId] = $group->gId;
-                */
-            }
-
-            $groupId   = $this->listMap->groups[$listId];
-
-            if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
-                $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
-                $this->google->addContact($groupId, $contact);
-
-                //$this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
-
-                $this->logger->notice("Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'.");
-
-                return;
-            }
-
             $contactId = $this->listMap->groupElements[$listId]->contacts[$memberId];
 
             if ($event['event'] === 'subscribed') {

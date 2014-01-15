@@ -8,14 +8,15 @@ use ApiHelper\Contacts\Entity\Collection\Contacts;
 use ApiHelper\Contacts\Entity\Collection\Fields;
 use ApiHelper\Contacts\Entity\Collection\Groups;
 use ApiHelper\Contacts\Entity\Contact;
+use ApiHelper\Contacts\Entity\Field;
 use ApiHelper\Contacts\Entity\Group;
-use ArrayIterator;
 use Connect\Entity\GoogleTokenSet;
 use DateTime;
 use Google_Client;
 use Google_Http_Request;
 use Google_Http_REST;
 use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
+use Iterator\ArrayIterator;
 use RuntimeException;
 use SimpleXMLElement;
 
@@ -466,13 +467,13 @@ class Google implements ApiHelperInterface
 
         $entry = $this->iteratorFactory->createArrayPathIterator($response['entry']);
         $data  = array(
-            'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
-            'fields'     => $this->normalizeFields($entry),
-            'gLinks'     => $this->normalizeLinks($entry['link']),
-            'gEtag'      => $entry['gd$etag'],
-            'gId'        => $entry['id.$t'],
-            'gUpdated'   => $entry['updated.$t'],
-            'groups'     => $this->normalizeGroupMemberships($entry['gContact$groupMembershipInfo']),
+            'email'    => $this->resolvePrimaryAddress($entry['gd$email']),
+            'fields'   => $this->normalizeFields($entry),
+            'gLinks'   => $this->normalizeLinks($entry['link']),
+            'gEtag'    => $entry['gd$etag'],
+            'gId'      => $entry['id.$t'],
+            'gUpdated' => $entry['updated.$t'],
+            'groups'   => $this->normalizeGroupMemberships($entry['gContact$groupMembershipInfo']),
         );
 
         return $this->factory->createContact($data);
@@ -508,44 +509,20 @@ class Google implements ApiHelperInterface
      */
     public function addContact($groupId, Contact $contact)
     {
-        $xmlString = "<atom:entry xmlns:atom='http://www.w3.org/2005/Atom' xmlns:gd='http://schemas.google.com/g/2005'>
-    <atom:category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/contact/2008#contact'/>
-    <gd:name>
-        <gd:givenName></gd:givenName>
-        <gd:familyName></gd:familyName>
-        <gd:fullName></gd:fullName>
-    </gd:name>
-    <atom:title type='text'></atom:title>
-    <atom:content type='text'></atom:content>
-    <gd:email label='Email' primary='true' address=''/>
-    <gd:structuredPostalAddress label='Address'>
-        <gd:formattedAddress></gd:formattedAddress>
-        <gd:street></gd:street>
-        <gd:postcode></gd:postcode>
-        <gd:city></gd:city>
-        <gd:country code='NL'></gd:country>
-    </gd:structuredPostalAddress>
-    <gContact:website href='' label='Website'/>
-    <gContact:birthday when=''/>
-    <gd:organization rel='http://schemas.google.com/g/2005#other'>
-        <gd:orgName></gd:orgName>
-        <gd:orgTitle></gd:orgTitle>
-    </gd:organization>
-    <gContact:groupMembershipInfo deleted='false' href='{$groupId}'/>
-</atom:entry>";
+        $xmlString = "<atom:entry xmlns:atom='http://www.w3.org/2005/Atom' xmlns:gd='http://schemas.google.com/g/2005' xmlns:gContact='http://schemas.google.com/contact/2008'>
+            <atom:category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/contact/2008#contact'/>
+            </atom:entry>";
 
-        $contactNode = simplexml_load_string($xmlString);
+        $contact->groups = new ArrayIterator(array($groupId));
+        $entry           = simplexml_load_string($xmlString);
 
-//    <gContact:userDefinedField key='Another field' value='with some other information'/>
-//    <gContact:userDefinedField key='What the' value='other field'/>
+        $this->applyContactDefinitionToXml($entry, $contact);
 
-        var_dump("Adding contact");
+        echo $entry->asXML();
 
-        $contact->dump(false);
+        $contact->gId = $this->postContactXml($xmlString);
 
-        echo $contactNode->asXML();
-
-//        $contact->gId = $this->postContactXml($xmlString);
+        var_dump($contact->gId);
 
         return $contact;
     }
@@ -560,7 +537,42 @@ class Google implements ApiHelperInterface
      */
     public function updateContact($groupId, Contact $contact)
     {
-        $contactNode = $this->getContactXml($contact->gId);
+        $contact->groups = new ArrayIterator(array($groupId));
+        $entry           = $this->getContactXml($contact->gId);
+
+        $this->applyContactDefinitionToXml($entry, $contact);
+
+        $this->putContactXml($contact->gId, $entry);
+
+        return $contact;
+    }
+
+    /**
+     * Apply data from contact object to google contacts xml structure.
+     *
+     * @param SimpleXMLElement $entry
+     * @param Contact          $contact
+     *
+     * @return SimpleXMLElement
+     */
+    protected function applyContactDefinitionToXml(SimpleXMLElement $entry, Contact $contact)
+    {
+        $namespaces = $entry->getDocNamespaces(true);
+        $gd       = $entry->children($namespaces['gd']);
+        $gContact = $entry->children($namespaces['gContact']);
+
+        /*
+         * Update the email address
+         */
+        if (isset($gd->email) && ($email = $this->filter($gd->email, 'primary', 'true')) !== null) {
+            $email->attributes()->address = $contact->email;
+        }
+        else {
+            $email = $entry->addChild('email', null, $namespaces['gd']);
+            $email->addAttribute('label', 'Email');
+            $email->addAttribute('address', $contact->email);
+            $email->addAttribute('primary', 'true');
+        }
 
         /*
          * statically mapped fields
@@ -579,25 +591,218 @@ class Google implements ApiHelperInterface
          * 'content'                                => 'notes',
          */
 
-        var_dump("Updating contact");
+        // <gContact:userDefinedField key='Another field' value='with some other information'/>
+        // <gContact:userDefinedField key='What the' value='other field'/>
 
-        $contact->dump(false);
+        // <gContact:groupMembershipInfo deleted='false' href='{$groupId}'/>
 
-        echo $contactNode->asXML();
+        /** @var $field Field */
+        foreach ($contact->fields as $field) {
+            switch ($field->definition->identifier) {
+                case 'birth_date':
+                    /** @var $birthday SimpleXMLElement */
+                    $birthday = $gContact->birthday;
 
-        return $contact;
+                    if ($birthday->count() === 0) {
+                        $birthday = $entry->addChild('birthday', null, $namespaces['gContact']);
+                        $birthday->addAttribute('when', '');
+                    }
 
-//        'title'      => $entry['title.$t'],
-//        'email'      => $this->resolvePrimaryAddress($entry['gd$email']),
-//        'givenName'  => $entry['gd$name.gd$givenName.$t'],
-//        'familyName' => $entry['gd$name.gd$familyName.$t'],
-//        'fullName'   => $entry['gd$name.gd$fullName.$t'],
-//        'fields'     => $this->normalizeFields($entry),
+                    $birthday->attributes()->when = $field->value;
+                    break;
+                case 'family_name':
+                    if ($gd->name->count() === 0) {
+                        $entry->addChild('name', '', $namespaces['gd']);
+                    }
+
+                    if ($gd->name->familyName->count() === 0) {
+                        $gd->name->addChild('familyName', null, $namespaces['gd']);
+                    }
+
+                    $gd->name->familyName = $field->value;
+
+                    unset($gd->name->fullName);
+                    break;
+                case 'given_name':
+                    if ($gd->name->count() === 0) {
+                        $entry->addChild('name', '', $namespaces['gd']);
+                    }
+
+                    if ($gd->name->givenName->count() === 0) {
+                        $gd->name->addChild('givenName', null, $namespaces['gd']);
+                    }
+
+                    $gd->name->givenName = $field->value;
+                    break;
+                case 'organization':
+                    if ($gd->organization->count() === 0) {
+                        $entry->addChild('organization', null, $namespaces['gd']);
+                    }
+
+                    if ($gd->organization->orgName->count() === 0) {
+                        $gd->organization->addChild('orgName', null, $namespaces['gd']);
+                    }
+
+                    $gd->organization->orgName = $field->value;
+                    break;
+                case 'position':
+                    if ($gd->organization->count() === 0) {
+                        $entry->addChild('organization', null, $namespaces['gd']);
+                    }
+
+                    if ($gd->organization->orgTitle->count() === 0) {
+                        $gd->organization->addChild('orgTitle', null, $namespaces['gd']);
+                    }
+
+                    $gd->organization->orgTitle = $field->value;
+                    break;
+                case 'phone':
+                    if ($gd->phoneNumber->count() === 0) {
+                        $entry->addChild('phoneNumber', null, $namespaces['gd']);
+                    }
+
+                    $gd->phoneNumber = $field->value;
+                    break;
+                case 'address_street':
+                    if ($gd->structuredPostalAddress->count() === 0) {
+                        $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
+                        $address->addAttribute('label', 'Address');
+                    }
+
+                    if ($gd->structuredPostalAddress->street->count() === 0) {
+                        $gd->structuredPostalAddress->addChild('street', null, $namespaces['gd']);
+                    }
+
+                    $gd->structuredPostalAddress->street = $field->value;
+
+                    unset($gd->structuredPostalAddress->formattedAddress);
+                    break;
+                case 'address_postcode':
+                    if ($gd->structuredPostalAddress->count() === 0) {
+                        $address = $gd->addChild('structuredPostalAddress', null, $namespaces['gd']);
+                        $address->addAttribute('label', 'Address');;
+                    }
+
+                    if ($gd->structuredPostalAddress->postcode->count() === 0) {
+                        $gd->structuredPostalAddress->addChild('postcode', null, $namespaces['gd']);
+                    }
+
+                    $gd->structuredPostalAddress->postcode = $field->value;
+
+                    unset($gd->structuredPostalAddress->formattedAddress);
+                    break;
+                case 'address_city':
+                    if ($gd->structuredPostalAddress->count() === 0) {
+                        $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
+                        $address->addAttribute('label', 'Address');
+                    }
+
+                    if ($gd->structuredPostalAddress->city->count() === 0) {
+                        $gd->structuredPostalAddress->addChild('city', null, $namespaces['gd']);
+                    }
+
+                    $gd->structuredPostalAddress->city = $field->value;
+
+                    unset($gd->structuredPostalAddress->formattedAddress);
+                    break;
+                case 'address_country':
+                    if ($gd->structuredPostalAddress->count() === 0) {
+                        $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
+                        $address->addAttribute('label', 'Address');
+                    }
+
+                    if ($gd->structuredPostalAddress->country->count() === 0) {
+                        $gd->structuredPostalAddress->addChild('country', null, $namespaces['gd']);
+                    }
+
+                    $gd->structuredPostalAddress->country = $field->value;
+
+                    unset($gd->structuredPostalAddress->formattedAddress);
+                    break;
+                case 'website':
+                    $website = $gContact->website;
+
+                    if ($gContact->website->count() === 0) {
+                        $website = $entry->addChild('website', null, $namespaces['gContact']);
+                        $website->addAttribute('label', 'Website');
+                        $website->addAttribute('href', '');
+                    }
+
+                    $website->attributes()->href = $field->value;
+                    break;
+                case 'notes':
+                    if ($entry->content->count() === 0) {
+                        $entry->addChild('content', null, isset($namespaces['atom']) ? $namespaces['atom'] : null);
+                    }
+
+                    $entry->content = $field->value;
+                    break;
+                default:
+                    $custom = $this->filter($gContact->userDefinedField, 'key', $field->definition->name);
+
+                    if (is_null($custom)) {
+                        $custom = $entry->addChild('userDefinedField', null, $namespaces['gContact']);
+                        $custom->addAttribute('key', $field->definition->name);
+                        $custom->addAttribute('value', '');
+                    }
+
+                    $custom->attributes()->value = $field->value;
+                    break;
+            }
+        }
+
+        if ($gd->structuredPostalAddress->count() === 0) {
+            $gd->addChild('structuredPostalAddress', null, $namespaces['gd']);
+        }
+
+        if ($gd->structuredPostalAddress->formattedAddress->count() === 0) {
+            $gd->structuredPostalAddress->addChild('formattedAddress', null, $namespaces['gd']);
+        }
+
+        $gd->structuredPostalAddress->formattedAddress = trim(
+            sprintf(
+                "%s\n%s %s\n%s",
+                $gd->structuredPostalAddress->street,
+                $gd->structuredPostalAddress->postcode,
+                $gd->structuredPostalAddress->city,
+                $gd->structuredPostalAddress->country
+            )
+        );
+
+        /*
+         * Add the group memberships
+         */
+        foreach ($contact->groups as $groupId) {
+            $group = $this->filter($gContact->groupMembershipInfo, 'href', $groupId);
+
+            if (is_null($group)) {
+                $group = $entry->addChild('groupMembershipInfo', null, $namespaces['gContact']);
+                $group->addAttribute('deleted', 'false');
+                $group->addAttribute('href', $groupId);
+            }
+        }
     }
 
-    protected function applyContactDefinitionToXml(SimpleXMLElement $entry, Contact $contact)
+    /**
+     * Filter a collection of xml nodes by attribute value.
+     *
+     * @param SimpleXMLElement $collection
+     * @param string           $key
+     * @param string           $value
+     *
+     * @return SimpleXMLElement
+     */
+    protected function filter(SimpleXMLElement $collection, $key, $value)
     {
+        foreach ($collection as $item) {
+            $attributes = $item->attributes();
 
+            if (isset($attributes->$key) && $attributes->$key == $value) {
+                return $item;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -719,6 +924,12 @@ class Google implements ApiHelperInterface
             $xmlString,
             false
         );
+
+        if (substr($response, 0, 1) !== '<') {
+            var_dump($response);
+
+            return '';
+        }
 
         $result = simplexml_load_string($response);
 
