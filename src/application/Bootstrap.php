@@ -110,6 +110,11 @@ class Bootstrap
     {
         $config = $this->getConfig();
 
+        /*
+         * Always run the script to completion
+         */
+        ignore_user_abort(true);
+
         date_default_timezone_set($config->get('timezone'));
         ini_set('memory_limit', $config->get('memory_limit'));
         set_time_limit($config->get('time_limit'));
