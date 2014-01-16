@@ -123,7 +123,7 @@ class Laposta implements ApiHelperInterface
         $fields         = $this->denormalizeFields($contact->fields);
         $result         = $member->create(
             array(
-                 'ip'            => $_SERVER['SERVER_ADDR'],
+                 'ip'            => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR']: '127.0.0.1',
                  'email'         => $contact->email,
                  'source_url'    => 'http://google.com',
                  'custom_fields' => $fields,
