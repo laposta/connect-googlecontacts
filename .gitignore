@@ -1,0 +1,21 @@
+##
+## APPLICATION
+##
+config.local.php
+
+##
+## IDE
+##
+.idea/
+nbproject/
+
+##
+## COMPOSER
+##
+vendor/
+
+##
+## OSX
+##
+.DS_Store
+.AppleDouble

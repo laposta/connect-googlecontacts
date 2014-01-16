@@ -1,0 +1,236 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+    ],
+    "hash": "f02b129e0ea8409676d2ec4c2266ac9a",
+    "packages": [
+        {
+            "name": "codeblanche/depend",
+            "version": "1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/CodeBlanche/Depend.git",
+                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/27f9a6f007027ddc94f6933967611601e0e443d3",
+                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "./"
+                ],
+                "psr-0": {
+                    "DI": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Merten van Gerven",
+                    "email": "merten@codeblanche.com"
+                }
+            ],
+            "description": "Less Configuration, More Injection",
+            "keywords": [
+                "CodeBlanche",
+                "container",
+                "dependency",
+                "injection",
+                "php"
+            ],
+            "time": "2013-12-22 14:27:16"
+        },
+        {
+            "name": "codeblanche/entity",
+            "version": "1.4.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/CodeBlanche/Entity.git",
+                "reference": "4ac592d432587726c9147007d6239cd441c5b584"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/CodeBlanche/Entity/zipball/4ac592d432587726c9147007d6239cd441c5b584",
+                "reference": "4ac592d432587726c9147007d6239cd441c5b584",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "./"
+                ],
+                "psr-0": {
+                    "Entity": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Merten van Gerven",
+                    "email": "merten@codeblanche.com"
+                }
+            ],
+            "description": "All for Entity, and Entity for all",
+            "keywords": [
+                "CodeBlanche",
+                "Marshal",
+                "entity",
+                "php"
+            ],
+            "time": "2013-12-22 19:25:35"
+        },
+        {
+            "name": "codeblanche/web",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/CodeBlanche/Web.git",
+                "reference": "66baaa0c3ed20dc26dcfc8bb09763af55f8f243b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/CodeBlanche/Web/zipball/66baaa0c3ed20dc26dcfc8bb09763af55f8f243b",
+                "reference": "66baaa0c3ed20dc26dcfc8bb09763af55f8f243b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "./"
+                ],
+                "psr-0": {
+                    "DI": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Merten van Gerven",
+                    "email": "merten@codeblanche.com"
+                }
+            ],
+            "description": "PHP Web Essentials",
+            "keywords": [
+                "CodeBlanche",
+                "http",
+                "php",
+                "request",
+                "response",
+                "route",
+                "router",
+                "web"
+            ],
+            "time": "2013-12-08 15:39:51"
+        },
+        {
+            "name": "google/apiclient",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/google/google-api-php-client.git",
+                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/86fb12d484da7fecbe04cecf767ac83008f24234",
+                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2.1"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                "src/"
+            ],
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Client library for Google APIs",
+            "homepage": "http://developers.google.com/api-client-library/php",
+            "keywords": [
+                "google"
+            ],
+            "time": "2013-12-27 15:12:28"
+        },
+        {
+            "name": "laposta/laposta-api-php",
+            "version": "1.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/CodeBlanche/laposta-api-php.git",
+                "reference": "18c943048bce07c2b23497fee1236f312581dd5c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/CodeBlanche/laposta-api-php/zipball/18c943048bce07c2b23497fee1236f312581dd5c",
+                "reference": "18c943048bce07c2b23497fee1236f312581dd5c",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": ">=5.2"
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Stijn van der Ree",
+                    "email": "stijn@laposta.nl"
+                }
+            ],
+            "description": "PHP Laposta API wrapper",
+            "time": "2013-12-06 11:19:20"
+        }
+    ],
+    "packages-dev": [
+
+    ],
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "codeblanche/web": 20,
+        "google/apiclient": 20
+    },
+    "platform": [
+
+    ],
+    "platform-dev": [
+
+    ]
+}
