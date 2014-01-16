@@ -2,10 +2,10 @@
 
 namespace Iterator;
 
-use Iterator\Abstraction\FactoryInterface;
+use Iterator\Abstraction\IteratorFactoryInterface;
 use Traversable;
 
-class Factory implements FactoryInterface
+class IteratorFactory implements IteratorFactoryInterface
 {
     /**
      * @param array|Traversable $array

@@ -11,7 +11,7 @@ use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
 use ApiHelper\Contacts\Entity\Group;
 use DateTime;
-use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
+use Iterator\Abstraction\IteratorFactoryInterface as IteratorFactoryInterface;
 use Iterator\ArrayIterator;
 use Iterator\ArrayPathIterator;
 use Iterator\LinkedKeyIterator;

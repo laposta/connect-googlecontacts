@@ -28,6 +28,6 @@ class Module implements ModuleInterface
             $dm->describe($class)->setIsShared(false)->setIsCloneable(false);
         }
 
-        $dm->implement('Iterator\Abstraction\FactoryInterface', 'Iterator\Factory');
+        $dm->implement('Iterator\Abstraction\IteratorFactoryInterface', 'Iterator\IteratorFactory');
     }
 }

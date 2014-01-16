@@ -16,7 +16,9 @@ use Config\Config;
 use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
-use Iterator\Abstraction\FactoryInterface;
+use Exception;
+use Exception\ExceptionList;
+use Iterator\Abstraction\IteratorFactoryInterface;
 use Iterator\ArrayPathIterator;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
@@ -56,7 +58,7 @@ class SyncFromLaposta extends AbstractCommand
     private $clientData;
 
     /**
-     * @var FactoryInterface
+     * @var IteratorFactoryInterface
      */
     private $iteratorFactory;
 
@@ -74,14 +76,14 @@ class SyncFromLaposta extends AbstractCommand
      * @param Google            $google
      * @param Laposta           $laposta
      * @param Config            $config
-     * @param FactoryInterface  $iteratorFactory
+     * @param IteratorFactoryInterface  $iteratorFactory
      * @param LockableInterface $lock
      */
     function __construct(
         Google $google,
         Laposta $laposta,
         Config $config,
-        FactoryInterface $iteratorFactory,
+        IteratorFactoryInterface $iteratorFactory,
         LockableInterface $lock
     ) {
         $this->config          = $config;
@@ -395,8 +397,9 @@ class SyncFromLaposta extends AbstractCommand
     /**
      * Execute the command
      *
+     * @throws \RuntimeException
+     * @throws \Exception\ExceptionList
      * @return CommandInterface
-     * @throws RuntimeException
      */
     public function execute()
     {
@@ -414,15 +417,26 @@ class SyncFromLaposta extends AbstractCommand
         \Laposta::setApiKey($this->clientData->lapostaApiToken);
 
         if (!isset($this->eventList['data']) || !is_array($this->eventList['data'])) {
-            pretty_dump($this->eventList);
-
             throw new RuntimeException('No event data provided');
         }
 
+        $exceptionList = new ExceptionList();
+
         foreach ($this->eventList['data'] as $event) {
-            $this->consumeEvent($event);
+            try {
+                $this->consumeEvent($event);
+            }
+            catch (Exception $e) {
+                $this->logger->error($e->getMessage());
+
+                $exceptionList->append($e);
+            }
         }
 
         $this->lock->unlock($this->clientData->lapostaApiToken);
+
+        if ($exceptionList->count() > 0) {
+            throw $exceptionList;
+        }
     }
 }

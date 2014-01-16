@@ -3,6 +3,7 @@
 namespace Connect\MVC\Base;
 
 use Config\Config;
+use Exception\ExceptionList;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use Session\Session;
@@ -128,7 +129,12 @@ abstract class Controller extends \MVC\Controller
         echo $e->getMessage() . "\n";
 
         if ($this->config->get('debug.print_backtrace')) {
-            echo $e->getTraceAsString() . "\n";
+            if ($e instanceof ExceptionList) {
+                echo $e->getTracesAsString() . "\n";
+            }
+            else {
+                echo $e->getTraceAsString() . "\n";
+            }
         }
 
         echo "</pre>\n";

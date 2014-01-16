@@ -9,7 +9,7 @@ use Command\Abstraction\CommandInterface;
 use Config\Config;
 use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
-use Iterator\Abstraction\FactoryInterface;
+use Iterator\Abstraction\IteratorFactoryInterface;
 use Lock\Abstraction\LockableInterface;
 
 class RemoveAllFromLaposta extends AbstractCommand
@@ -45,7 +45,7 @@ class RemoveAllFromLaposta extends AbstractCommand
     private $clientData;
 
     /**
-     * @var FactoryInterface
+     * @var IteratorFactoryInterface
      */
     private $iteratorFactory;
 
@@ -58,14 +58,14 @@ class RemoveAllFromLaposta extends AbstractCommand
      * @param Google            $google
      * @param Laposta           $laposta
      * @param Config            $config
-     * @param FactoryInterface  $iteratorFactory
+     * @param IteratorFactoryInterface  $iteratorFactory
      * @param LockableInterface $lock
      */
     function __construct(
         Google $google,
         Laposta $laposta,
         Config $config,
-        FactoryInterface $iteratorFactory,
+        IteratorFactoryInterface $iteratorFactory,
         LockableInterface $lock
     ) {
         $this->config          = $config;

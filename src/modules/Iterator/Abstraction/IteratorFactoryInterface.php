@@ -8,7 +8,7 @@ use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 use Traversable;
 
-interface FactoryInterface
+interface IteratorFactoryInterface
 {
     /**
      * @param array|Traversable $array

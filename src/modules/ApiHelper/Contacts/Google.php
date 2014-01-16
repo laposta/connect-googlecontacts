@@ -15,7 +15,7 @@ use DateTime;
 use Google_Client;
 use Google_Http_Request;
 use Google_Http_REST;
-use Iterator\Abstraction\FactoryInterface as IteratorFactoryInterface;
+use Iterator\Abstraction\IteratorFactoryInterface as IteratorFactoryInterface;
 use Iterator\ArrayIterator;
 use RuntimeException;
 use SimpleXMLElement;
@@ -114,7 +114,7 @@ class Google implements ApiHelperInterface
     /**
      * Get all groups from the API
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return Groups
      */
     public function getGroups()
@@ -174,7 +174,7 @@ class Google implements ApiHelperInterface
     /**
      * Get all contacts from the API
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return Contacts
      */
     public function getContacts()
@@ -446,7 +446,7 @@ class Google implements ApiHelperInterface
      *
      * @param string $identifier
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return Contact
      */
     public function getContact($identifier)
@@ -518,11 +518,7 @@ class Google implements ApiHelperInterface
 
         $this->applyContactDefinitionToXml($entry, $contact);
 
-        echo $entry->asXML();
-
-        $contact->gId = $this->postContactXml($xmlString);
-
-        var_dump($contact->gId);
+        $contact->gId = $this->postContactXml($entry->asXML());
 
         return $contact;
     }
@@ -558,8 +554,8 @@ class Google implements ApiHelperInterface
     protected function applyContactDefinitionToXml(SimpleXMLElement $entry, Contact $contact)
     {
         $namespaces = $entry->getDocNamespaces(true);
-        $gd       = $entry->children($namespaces['gd']);
-        $gContact = $entry->children($namespaces['gContact']);
+        $gd         = $entry->children($namespaces['gd']);
+        $gContact   = $entry->children($namespaces['gContact']);
 
         /*
          * Update the email address
@@ -636,7 +632,8 @@ class Google implements ApiHelperInterface
                     break;
                 case 'organization':
                     if ($gd->organization->count() === 0) {
-                        $entry->addChild('organization', null, $namespaces['gd']);
+                        $organization = $entry->addChild('organization', null, $namespaces['gd']);
+                        $organization->addAttribute('label', 'Organization');
                     }
 
                     if ($gd->organization->orgName->count() === 0) {
@@ -647,7 +644,8 @@ class Google implements ApiHelperInterface
                     break;
                 case 'position':
                     if ($gd->organization->count() === 0) {
-                        $entry->addChild('organization', null, $namespaces['gd']);
+                        $organization = $entry->addChild('organization', null, $namespaces['gd']);
+                        $organization->addAttribute('label', 'Organization');
                     }
 
                     if ($gd->organization->orgTitle->count() === 0) {
@@ -887,6 +885,7 @@ class Google implements ApiHelperInterface
      * @param SimpleXMLElement $contact
      *
      * @return SimpleXMLElement
+     * @throws RuntimeException
      */
     protected function putContactXml($identifier, SimpleXMLElement $contact)
     {
@@ -904,12 +903,17 @@ class Google implements ApiHelperInterface
             false
         );
 
+        if (substr($response, 0, 1) !== '<') {
+            throw new RuntimeException("Error PUT-ing contact to Google with response: $response");
+        }
+
         return simplexml_load_string($response);
     }
 
     /**
      * @param string $xmlString
      *
+     * @throws RuntimeException
      * @return string The created contact id
      */
     protected function postContactXml($xmlString)
@@ -926,9 +930,7 @@ class Google implements ApiHelperInterface
         );
 
         if (substr($response, 0, 1) !== '<') {
-            var_dump($response);
-
-            return '';
+            throw new RuntimeException("Error POST-ing contact to Google with response: $response");
         }
 
         $result = simplexml_load_string($response);
