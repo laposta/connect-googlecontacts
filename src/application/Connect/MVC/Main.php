@@ -44,6 +44,8 @@ class Main extends Controller
             $path = $this->request->uri()->getPath();
         }
 
+        $this->logger->debug("Receive request with path '$path'");
+
         $this->defineRoutes()->route($path);
     }
 }
