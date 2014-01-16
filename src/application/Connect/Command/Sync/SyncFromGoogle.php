@@ -162,7 +162,7 @@ class SyncFromGoogle extends AbstractCommand
 
         $protocol = $this->config->get('ssl') ? 'https' : 'http';
         $hostname = $this->config->get('hostname');
-        $hookUrl  = $protocol . '://' . $hostname . '/consume-events/?clientToken=' . $this->clientData->token;
+        $hookUrl  = $protocol . '://' . $hostname . '/sync/consume-events/?clientToken=' . $this->clientData->token;
 
         /** @var $group Group */
         foreach ($groups as $group) {
