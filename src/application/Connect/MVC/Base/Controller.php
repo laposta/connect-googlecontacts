@@ -122,19 +122,13 @@ abstract class Controller extends \MVC\Controller
      */
     public function err(\Exception $e)
     {
-        $this->logger->error($e->getMessage());
-
         echo "<pre>\n";
 
         echo $e->getMessage() . "\n";
+        $this->logger->error($e->getMessage());
 
         if ($this->config->get('debug.print_backtrace')) {
-            if ($e instanceof ExceptionList) {
-                echo $e->getTracesAsString() . "\n";
-            }
-            else {
-                echo $e->getTraceAsString() . "\n";
-            }
+            echo $e->getTraceAsString() . "\n";
         }
 
         echo "</pre>\n";

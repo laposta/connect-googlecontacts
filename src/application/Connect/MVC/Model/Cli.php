@@ -12,6 +12,9 @@ use Connect\Command\Sync\SyncFromGoogle;
 use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\MVC\Base\Model;
+use Exception\ExceptionList;
+use Exception;
+use Lock\Abstraction\LockableInterface;
 use Logger\Abstraction\LoggerInterface;
 use RegexIterator;
 use RuntimeException;
@@ -39,11 +42,17 @@ class Cli extends Model
      */
     private $logger;
 
-    public function __construct(CommandFactory $commandFactory, LoggerInterface $logger)
+    /**
+     * @var LockableInterface
+     */
+    private $lock;
+
+    public function __construct(CommandFactory $commandFactory, LoggerInterface $logger, LockableInterface $lock)
     {
         parent::__construct($commandFactory);
 
         $this->logger = $logger;
+        $this->lock   = $lock;
     }
 
     /**
@@ -56,6 +65,11 @@ class Cli extends Model
      */
     public function importFromGoogle($dataDir)
     {
+        $lockIdentifier = __CLASS__;
+        if (!$this->lock->lock($lockIdentifier)) {
+            throw new RuntimeException("Unable to obtain lock for '{$lockIdentifier}'.");
+        }
+
         if (!file_exists($dataDir) || !is_dir($dataDir)) {
             throw new RuntimeException("Unable to load clients from '$dataDir'. Given path is not a directory.");
         }
@@ -66,25 +80,37 @@ class Cli extends Model
         $list      = new RegexIterator($directory, '/\.php$/i');
 
         for ($list->rewind(); $list->valid(); $list->next()) {
-            $this->resetClientProperties();
+            try {
+                $this->resetClientProperties();
 
-            /** @var $file SplFileInfo */
-            $file              = $list->current();
-            $this->clientToken = $file->getBasename('.php');
+                /** @var $file SplFileInfo */
+                $file              = $list->current();
+                $this->clientToken = $file->getBasename('.php');
 
-            $this->logger->info("Commencing import for bridge '$this->clientToken'");
+                $this->logger->info("Commencing import for bridge '$this->clientToken'");
 
-            $this->loadClientData();
-            $this->loadClientMap();
+                $this->loadClientData();
+                $this->loadClientMap();
 
-            $this->clientData->token = $this->clientToken;
+                $this->clientData->token = $this->clientToken;
 
-            /** @var $command SyncFromGoogle */
-            $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromGoogle');
-            $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+                /** @var $command SyncFromGoogle */
+                $command = $this->getCommandFactory()->create('Connect\Command\Sync\SyncFromGoogle');
+                $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
 
-            $this->persist();
+                $this->persist();
+            }
+            catch (ExceptionList $e) {
+                foreach ($e->getList() as $exception) {
+                    $this->logger->error("{$exception->getMessage()} on line '{$exception->getLine()}' of '{$exception->getFile()}'");
+                }
+            }
+            catch (Exception $e) {
+                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+            }
         }
+
+        $this->lock->unlock($lockIdentifier);
 
         return $this;
     }

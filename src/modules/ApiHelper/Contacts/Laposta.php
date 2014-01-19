@@ -11,6 +11,7 @@ use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
 use ApiHelper\Contacts\Entity\Group;
 use DateTime;
+use Entity\Exception\RuntimeException;
 use Iterator\Abstraction\IteratorFactoryInterface as IteratorFactoryInterface;
 use Iterator\ArrayIterator;
 use Iterator\ArrayPathIterator;
@@ -20,6 +21,7 @@ use Laposta as LapostaApi;
 use Laposta_List;
 use Laposta_Member;
 use Laposta_Webhook;
+use Logger\Abstraction\LoggerInterface;
 
 class Laposta implements ApiHelperInterface
 {
@@ -49,17 +51,30 @@ class Laposta implements ApiHelperInterface
     private $fieldCache;
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var LinkedKeyIterator
+     */
+    private $fieldMap;
+
+    /**
      * Default constructor
      *
      * @param ContactsFactoryInterface $factory
      * @param IteratorFactoryInterface $iteratorFactory
+     * @param LoggerInterface          $logger
      */
     function __construct(
         ContactsFactoryInterface $factory,
-        IteratorFactoryInterface $iteratorFactory
+        IteratorFactoryInterface $iteratorFactory,
+        LoggerInterface $logger
     ) {
         $this->factory         = $factory;
         $this->iteratorFactory = $iteratorFactory;
+        $this->logger          = $logger;
 
         $this->fieldCache = new ArrayIterator();
     }
@@ -71,11 +86,11 @@ class Laposta implements ApiHelperInterface
      */
     public function getGroups()
     {
-        $list = new Laposta_List();
-
-        $result = $list->all();
-
-        $this->hasMoreGroups = false;
+//        $list = new Laposta_List();
+//
+//        $result = $list->all();
+//
+//        $this->hasMoreGroups = false;
     }
 
     /**
@@ -119,17 +134,22 @@ class Laposta implements ApiHelperInterface
      */
     public function addContact($groupId, Contact $contact)
     {
-        $member         = new Laposta_Member($groupId);
-        $fields         = $this->denormalizeFields($contact->fields);
-        $result         = $member->create(
-            array(
-                 'ip'            => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR']: '127.0.0.1',
-                 'email'         => $contact->email,
-                 'source_url'    => 'http://google.com',
-                 'custom_fields' => $fields,
-            )
+        $member = new Laposta_Member($groupId);
+        $fields = $this->denormalizeFields($contact->fields, $groupId);
+        $data   = array(
+            'ip'            => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '127.0.0.1',
+            'email'         => $contact->email,
+            'source_url'    => 'http://google.com',
+            'custom_fields' => $fields,
         );
-        $result         = $this->iteratorFactory->createArrayPathIterator($result);
+
+        $this->logger->debug(
+            "Adding contact '$contact->email' with data: " . json_encode($data)
+        );
+
+        $result         = $this->iteratorFactory->createArrayPathIterator(
+            $member->create($data)
+        );
         $contact->lapId = $result['member.member_id'];
 
         return $contact;
@@ -139,16 +159,33 @@ class Laposta implements ApiHelperInterface
      * Denormalise the fields data for input to Laposta
      *
      * @param Fields $fields
+     * @param string $groupId
      *
      * @return array
+     * @throws RuntimeException
      */
-    protected function denormalizeFields(Fields $fields)
+    protected function denormalizeFields(Fields $fields, $groupId)
     {
+        if (!($this->fieldMap instanceof LinkedKeyIterator) || $this->fieldMap->count() === 0) {
+            throw new RuntimeException('Unable to denormalize fields without the field map.');
+        }
+
         $result = array();
+        $tagMap = array_flip($this->getFieldsMap($groupId)->getArrayCopy());
+
+        $this->logger->debug(
+            "Resolving fields using tag map: " . json_encode($tagMap)
+        );
 
         /** @var $field Field */
         foreach ($fields as $field) {
-            $cleanTag          = trim($field->definition->tag, '{}');
+            $tag = '';
+
+            if (isset($tagMap[$this->fieldMap[$field->definition->identifier]])) {
+                $tag = $tagMap[$this->fieldMap[$field->definition->identifier]];
+            }
+
+            $cleanTag          = trim($tag, '{}');
             $result[$cleanTag] = $field->value;
         }
 
@@ -156,15 +193,37 @@ class Laposta implements ApiHelperInterface
     }
 
     /**
-     * Modify an existing contact
+     * Update an existing contact
      *
      * @param string  $groupId
      * @param Contact $contact
+     * @param bool    $subscribed
      *
      * @return Contact
      */
-    public function updateContact($groupId, Contact $contact)
+    public function updateContact($groupId, Contact $contact, $subscribed = true)
     {
+        $member = new Laposta_Member($groupId);
+        $fields = $this->denormalizeFields($contact->fields, $groupId);
+        $data   = array(
+            'ip'            => isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : '127.0.0.1',
+            'email'         => $contact->email,
+            'state'         => $subscribed ? 'active' : 'unsubscribed',
+            'custom_fields' => $fields,
+        );
+
+        $this->logger->debug(
+            "Updating contact '$contact->email' with data: " . json_encode($data)
+        );
+
+        $result         = $member->update(
+            $contact->lapId,
+            $data
+        );
+        $result         = $this->iteratorFactory->createArrayPathIterator($result);
+        $contact->lapId = $result['member.member_id'];
+
+        return $contact;
     }
 
     /**
@@ -188,6 +247,10 @@ class Laposta implements ApiHelperInterface
      */
     public function addField($groupId, Field $field)
     {
+        if (isset($this->fieldCache[$groupId])) {
+            unset($this->fieldCache[$groupId]);
+        }
+
         $lapField = new \Laposta_Field($groupId);
         $result   = $lapField->create(
             array(
@@ -275,13 +338,17 @@ class Laposta implements ApiHelperInterface
     /**
      * Convert data from the source into a native contact object.
      *
-     * @param array             $data
-     * @param LinkedKeyIterator $fieldMap
+     * @param array $data
      *
      * @return Contact
+     * @throws RuntimeException
      */
-    public function convertToContact(array $data, LinkedKeyIterator $fieldMap)
+    public function convertToContact(array $data)
     {
+        if (!($this->fieldMap instanceof LinkedKeyIterator) || $this->fieldMap->count() === 0) {
+            throw new RuntimeException('Unable to convert to contact without the field map. Map given was: ' . var_export($this->fieldMap, true));
+        }
+
         /*
          * $data = {
                 "member_id": "5t8zgm63qk",
@@ -460,5 +527,25 @@ class Laposta implements ApiHelperInterface
 
             $hook->update($hookId, array('blocked' => 'false'));
         }
+    }
+
+    /**
+     * @param \Iterator\LinkedKeyIterator $fieldMap
+     *
+     * @return Laposta
+     */
+    public function setFieldMap($fieldMap)
+    {
+        $this->fieldMap = $fieldMap;
+
+        return $this;
+    }
+
+    /**
+     * @return \Iterator\LinkedKeyIterator
+     */
+    public function getFieldMap()
+    {
+        return $this->fieldMap;
     }
 }

@@ -17,9 +17,11 @@ use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
 use DateTime;
+use Exception;
 use Iterator\Abstraction\IteratorFactoryInterface;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
+use Laposta_Error;
 use Lock\Abstraction\LockableInterface;
 
 class SyncFromGoogle extends AbstractCommand
@@ -65,11 +67,11 @@ class SyncFromGoogle extends AbstractCommand
     private $lock;
 
     /**
-     * @param Google            $google
-     * @param Laposta           $laposta
-     * @param Config            $config
-     * @param IteratorFactoryInterface  $iteratorFactory
-     * @param LockableInterface $lock
+     * @param Google                   $google
+     * @param Laposta                  $laposta
+     * @param Config                   $config
+     * @param IteratorFactoryInterface $iteratorFactory
+     * @param LockableInterface        $lock
      */
     function __construct(
         Google $google,
@@ -152,9 +154,15 @@ class SyncFromGoogle extends AbstractCommand
     {
         $this->logger->info('Synchronizing groups');
 
-        if ($groups->count() === 0) {
+        $count = $groups->count();
+
+        if ($count === 0) {
             $this->logger->info('No groups to synchronize');
+
+            return;
         }
+
+        $this->logger->info("Found $count groups.");
 
         if (!($this->listMap->hooks instanceof MultiLinkedKeyIterator)) {
             $this->listMap->hooks = $this->iteratorFactory->createMultiLinkedKeyIterator();
@@ -166,6 +174,8 @@ class SyncFromGoogle extends AbstractCommand
 
         /** @var $group Group */
         foreach ($groups as $group) {
+            $this->logger->debug("Sychronizing group '$group->title'");
+
             $lapId = null;
 
             if (isset($this->listMap->groups[$group->gId])) {
@@ -210,13 +220,30 @@ class SyncFromGoogle extends AbstractCommand
     {
         $this->logger->info('Synchronizing contacts');
 
-        if ($contacts->count() === 0) {
+        $count = $contacts->count();
+
+        if ($count === 0) {
             $this->logger->info('No contacts to synchronize');
+
+            return;
         }
+
+        $this->logger->info("Found $count contacts.");
 
         /** @var $contact Contact */
         foreach ($contacts as $contact) {
-            $this->synchronizeContact($contact);
+            try {
+                $this->synchronizeContact($contact);
+            }
+            catch (Laposta_Error $e) {
+                $this->logger->error(
+                    "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
+                    )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                );
+            }
+            catch (Exception $e) {
+                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+            }
         }
     }
 
@@ -225,8 +252,16 @@ class SyncFromGoogle extends AbstractCommand
      */
     protected function synchronizeContact(Contact $contact)
     {
-        foreach ($contact->groups as $gGroupId) {
-            $lapGroupId = $this->listMap->groups[$gGroupId];
+        $this->logger->debug("Sychronizing contact '$contact->email'");
+
+        foreach ($this->listMap->groups as $gGroupId) {
+            /*
+             * Important: Start with an empty lapId
+             */
+            $contact->lapId = null;
+            $lapGroupId     = $this->listMap->groups[$gGroupId];
+
+            $this->logger->debug("Checking contact '$contact->email' in group '$gGroupId'");
 
             if (empty($lapGroupId)) {
                 $this->logger->warning("Unable to import into nonexistent group '$gGroupId'.");
@@ -234,32 +269,52 @@ class SyncFromGoogle extends AbstractCommand
                 continue;
             }
 
-            $this->synchronizeFields($contact->fields, $lapGroupId);
+            $this->logger->debug(
+                "Retrieving group elements for '$lapGroupId' which is '$gGroupId'"
+            );
 
             /** @var $groupElements ListMapGroup */
             $groupElements = $this->listMap->groupElements[$lapGroupId];
-
-            $lapContactId = null;
+            $subscribed    = in_array($gGroupId, $contact->groups->getArrayCopy());
 
             if (isset($groupElements->contacts[$contact->gId])) {
-                $lapContactId = $groupElements->contacts[$contact->gId];
+                $contact->lapId = $groupElements->contacts[$contact->gId];
             }
 
-            if (empty($lapContactId)) {
-                $this->laposta->addContact($lapGroupId, $contact);
-
-                $lapContactId = $contact->lapId;
+            if (empty($contact->lapId) && !$subscribed) {
+                /*
+                 * Contact isn't in the group on either side of the bridge. Safe to skip.
+                 */
 
                 $this->logger->debug(
-                    "Added new contact '{$contact->email}' in group '$lapGroupId'. Contact id is '$lapContactId'"
+                    "Skipping contact '{$contact->email}' in group '$lapGroupId'"
+                );
+
+                continue;
+            }
+
+            $this->synchronizeFields($contact->fields, $lapGroupId);
+            $this->laposta->setFieldMap($groupElements->fields);
+
+            if (empty($contact->lapId)) {
+                $this->logger->debug(
+                    "Adding contact '{$contact->email}' in group '$lapGroupId'."
+                );
+
+                $this->laposta->addContact($lapGroupId, $contact);
+
+                $this->logger->debug(
+                    "Id '{$contact->lapId}' assigned to contact '{$contact->email}'."
                 );
 
                 $groupElements->contacts[$contact->lapId] = $contact->gId;
             }
             else {
                 $this->logger->debug(
-                    "Skipping contact '{$contact->email}' in group '$lapGroupId' with id '$lapContactId'"
+                    "Updating contact '{$contact->email}' in group '$lapGroupId' with id '$contact->lapId'"
                 );
+
+                $this->laposta->updateContact($lapGroupId, $contact, $subscribed);
             }
         }
     }
@@ -302,11 +357,12 @@ class SyncFromGoogle extends AbstractCommand
     /**
      * Execute the command
      *
+     * @throws \Exception\ExceptionList
      * @return CommandInterface
      */
     public function execute()
     {
-        if ($this->lock->isLocked($this->clientData->lapostaApiToken)) {
+        if (!$this->lock->lock($this->clientData->lapostaApiToken)) {
             return $this;
         }
 
@@ -324,18 +380,41 @@ class SyncFromGoogle extends AbstractCommand
         $this->clientData->lastImport = time();
 
         while ($this->google->hasMoreGroups()) {
-            $this->synchronizeGroups($this->google->getGroups());
+            try {
+                $this->synchronizeGroups($this->google->getGroups());
+            }
+            catch (Laposta_Error $e) {
+                $this->logger->error(
+                    "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
+                    )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                );
+            }
+            catch (Exception $e) {
+                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+            }
         }
 
-        $this->logger->info('Disabling hooks for all existing groups');
+        $this->logger->info('Disabling hooks for all groups');
         $this->laposta->disableHooks($this->listMap->hooks);
 
         while ($this->google->hasMoreContacts()) {
-            $this->synchronizeContacts($this->google->getContacts());
+            try {
+                $this->synchronizeContacts($this->google->getContacts());
+            }
+            catch (Laposta_Error $e) {
+                $this->logger->error(
+                    "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
+                    )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                );
+            }
+            catch (Exception $e) {
+                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+            }
         }
 
         $this->logger->info('Re-enabling hooks for all groups');
         $this->laposta->enableHooks($this->listMap->hooks);
+        $this->lock->unlock($this->clientData->lapostaApiToken);
 
         return $this;
     }

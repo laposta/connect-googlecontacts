@@ -4,9 +4,9 @@ namespace Connect\MVC;
 
 use Config\Config;
 use Connect\MVC\Base\Controller;
-use Connect\MVC\Base\Model;
 use Connect\MVC\Base\View;
 use Connect\MVC\Model\Authority as AuthorityModel;
+use Exception;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use Web\Response\Status;
@@ -47,14 +47,14 @@ class Authority extends Controller
      */
     public function run($params = array())
     {
-        $requestMethod  = strtoupper($this->request->server('REQUEST_METHOD'));
-        $action         = '';
+        $requestMethod = strtoupper($this->request->server('REQUEST_METHOD'));
+        $action        = '';
 
         if (isset($params['action'])) {
             $action = strtoupper($params['action']);
         }
 
-        if (!is_empty($this->request->get('code'))) {
+        if (!is_empty($this->request->get('code')) || !is_empty($this->request->get('error'))) {
             $this->confirmAuthority();
         }
         elseif ($requestMethod === 'DELETE' || $action === 'DELETE') {
@@ -73,15 +73,23 @@ class Authority extends Controller
      */
     protected function purgeAuthority()
     {
-        $this->model->purgeAuthority(
-            $this->request->post('email'),
-            $this->request->post('lapostaApiToken')
-        );
+        $status = 'ok';
+
+        try {
+            $this->model->purgeAuthority(
+                $this->request->post('email'),
+                $this->request->post('lapostaApiToken')
+            );
+        }
+        catch (Exception $e) {
+            $this->logger->error($e->getMessage());
+            $status = 'failed';
+        }
 
         $returnUrl = $this->request->post('returnUrl');
 
         if (!empty($returnUrl)) {
-            $this->redirect($returnUrl);
+            $this->redirect($returnUrl . (strpos($returnUrl, '?') !== false ? '&' : '?') . 'status=' . $status);
         }
 
         return $this;
@@ -93,14 +101,30 @@ class Authority extends Controller
      */
     protected function initAuthority()
     {
-        $redirect = $this->model->initiate(
-            $this->request->post('email'),
-            $this->request->post('lapostaApiToken'),
-            $this->request->post('returnUrl')
-        );
+        $status = 'ok';
 
-        if (!empty($redirect)) {
-            $this->redirect($redirect);
+        try {
+            $redirect = $this->model->initiate(
+                $this->request->post('email'),
+                $this->request->post('lapostaApiToken'),
+                $this->request->post('returnUrl')
+            );
+
+            if (!empty($redirect)) {
+                $this->redirect($redirect);
+
+                    return $this;
+            }
+        }
+        catch(Exception $e) {
+            $this->logger->error($e->getMessage());
+            $status = 'failed';
+        }
+
+        $returnUrl = $this->request->post('returnUrl');
+
+        if (!empty($returnUrl)) {
+            $this->redirect($returnUrl . (strpos($returnUrl, '?') !== false ? '&' : '?') . 'status=' . $status);
         }
 
         return $this;
@@ -111,13 +135,22 @@ class Authority extends Controller
      */
     protected function confirmAuthority()
     {
-        $this->model->confirmAuthority($this->request->get('code'));
+        $status = 'ok';
 
-        $redirect = $this->model->getClientReturnUrl();
-
-        if (!empty($redirect)) {
-            $this->redirect($redirect);
+        try {
+            $this->model->confirmAuthority($this->request->get('code'));
         }
+        catch (Exception $e) {
+            $this->logger->error($e->getMessage());
+            $status = 'failed';
+        }
+
+        $returnUrl = $this->model->getClientReturnUrl();
+
+        if (!empty($returnUrl)) {
+            $this->redirect($returnUrl . (strpos($returnUrl, '?') !== false ? '&' : '?') . 'status=' . $status);
+        }
+
 
         return $this;
     }
