@@ -77,7 +77,7 @@ An example using an HTML form:
 
 The user will be presented with Google's API consent screen (Or google sign in page if not already signed in followed by the latter). After confirming consent for Googleposta to access the users contacts within GC he/she will be redirected back to the return url (if provided).
 
-The return url will receive a query string **status** value indicating the success or failure of the authorization request.
+The return url will receive a query string **status** value indicating the success or failure of the import with values 'ok' or 'fail' respectively.
 
 
 ### Removing an existing connection
@@ -102,7 +102,7 @@ An example using an HTML form:
 
 All data caches in googleposta belonging to the user are removed and the authorisation keys allowing googleposta to connect to GC are deleted. The user will then be redirected back to the return url (if provided).
 
-The return url will receive a query string **status** value indicating the success or failure of the authorization request.
+The return url will receive a query string **status** value indicating the success or failure of the import with values 'ok' or 'fail' respectively.
 
 
 ### Trigger synchronisation of accounts
@@ -127,4 +127,30 @@ An example using an HTML form:
 
 Once complete, the user will then be redirected back to the return url (if provided).
 
-The return url will receive a query string **status** value indicating the success or failure of the import.
+The return url will receive a query string **status** value indicating the success or failure of the import with values 'ok' or 'fail' respectively.
+
+### Remove all lists and reset import marker
+
+** USE WITH EXTREME CAUTION: ALL LISTS ON THE LAPOSTA ACCOUNT WILL BE REMOVED **
+
+To a laposta bridge the following options must be sent to https://{googleposta_host}/sync/reset using the POST method.
+
+* **email** - Laposta account holder email
+* **lapostaApiToken** - Laposta API key
+* **returnUrl** (optional) - Return URL
+
+An example using an HTML form:
+
+```html
+<form method="post" action="https://{googleposta_host}/sync/reset">
+    <input type="hidden" name="email" value="{laposta_login}" />
+    <input type="hidden" name="lapostaApiToken" value="{laposta_api_key}" />
+    <input type="hidden" name="returnUrl" value="{return_url}" />
+
+    <input type="submit" value="Yes, Remove everything!" />
+</form>
+```
+
+Once complete, the user will then be redirected back to the return url (if provided).
+
+The return url will receive a query string **status** value indicating the success or failure of the import with values 'ok' or 'fail' respectively.

@@ -94,12 +94,16 @@ return array(
     'google'       => array(
         /*
          * Client secret from google cloud console.
+         *
+         * SET VALUE IN config.local.php
          */
-        'client_secret' => 'PH9keaXHD0rDDgAV1qSpy_E-',
+        'client_secret' => '',
         /*
          * Client id from google cloud console.
+         *
+         * SET VALUE IN config.local.php
          */
-        'client_id'     => '915139937104-frrse699unjsdkmr30kmsvboi1g5hghm.apps.googleusercontent.com',
+        'client_id'     => '',
         /*
          * The url google will return to after consent screen
          */
@@ -124,8 +128,10 @@ return array(
         'https'          => true,
         /*
          * Key to use for data encryption.
+         *
+         * SET VALUE IN config.local.php
          */
-        'encryption_key' => 'WPOzabpK2V2JGm70Hr091Nl2IUTyD2SgM98fNZEy',
+        'encryption_key' => '',
     ),
     /*
      * Settings for the synchronisation process
@@ -136,5 +142,18 @@ return array(
          * be imported. If 'false' only custom (user created) groups will be imported.
          */
         'allow_system_groups' => false,
+    ),
+    /*
+     * Additional configuration for the locking mechanism.
+     */
+    'lock' => array(
+        /*
+         * Maximum number of seconds to wait for a lock.
+         */
+        'max_wait_seconds' => 15,
+        /*
+         * Interval to test lock state while waiting
+         */
+        'wait_interval' => 0.1,
     ),
 );

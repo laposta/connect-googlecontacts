@@ -51,10 +51,15 @@ class Authority extends Model
      *
      * @param string $googleAuthCode
      *
-     * @return Authority
+     * @return bool
+     * @throws \RuntimeException
      */
     public function confirmAuthority($googleAuthCode)
     {
+        if (empty($googleAuthCode)) {
+            throw new RuntimeException("Unable to authorise bridge with auth code '$googleAuthCode'");
+        }
+
         /** @var $command ConfirmApiBridge */
         $command = $this->getCommandFactory()->create('Connect\Command\ConfirmApiBridge');
         $command->setAuthCode($googleAuthCode)->execute();

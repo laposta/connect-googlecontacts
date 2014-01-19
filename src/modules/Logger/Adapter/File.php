@@ -2,6 +2,8 @@
 
 namespace Logger\Adapter;
 
+use Exception\ExceptionList;
+use Exception;
 use Logger\Adapter\Abstraction\AdapterInterface;
 
 class File implements AdapterInterface
@@ -63,10 +65,39 @@ class File implements AdapterInterface
      */
     public function __destruct()
     {
-        $filePath = $this->dirPath . '/' . date('Y-m-d') . '.log';
+        try {
+            $filePath = $this->dirPath . '/' . date('Y-m-d') . '.log';
 
-        if (file_exists($filePath)) {
-            chmod($filePath, 0666);
+            if (file_exists($filePath)) {
+                chmod($filePath, 0666);
+            }
+
+            $linkPath = $this->dirPath . '/today.log';
+
+            $this->symlink($linkPath, $filePath);
         }
+        catch (Exception $e) {
+            $this->send('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create a symlink.
+     *
+     * @param string $linkPath
+     * @param string $filePath
+     *
+     * @return bool
+     */
+    protected function symlink($linkPath, $filePath)
+    {
+        if (is_link($linkPath) && readlink($linkPath) === $filePath) {
+            return true;
+        }
+        if (is_link($linkPath) && !unlink($linkPath)) {
+            return false;
+        }
+
+        return symlink($filePath, $linkPath) && chmod($linkPath, 0666);
     }
 }

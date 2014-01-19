@@ -8,6 +8,8 @@ use Connect\MVC\Base\Controller;
 use Connect\MVC\Base\Model;
 use Connect\MVC\Base\View;
 use Connect\MVC\Model\Sync as SyncModel;
+use Exception\ExceptionList;
+use Exception;
 use Logger\Abstraction\LoggerInterface;
 use Path\Resolver;
 use RuntimeException;
@@ -76,15 +78,23 @@ class Sync extends Controller
      */
     protected function importFromGoogle()
     {
-        $this->model->importFromGoogle(
-            $this->request->post('email'),
-            $this->request->post('lapostaApiToken')
-        );
+        $status = 'ok';
+
+        try {
+            $this->model->importFromGoogle(
+                $this->request->post('email'),
+                $this->request->post('lapostaApiToken')
+            );
+        }
+        catch (Exception $e) {
+            $this->logger->error($e->getMessage());
+            $status = 'failed';
+        }
 
         $returnUrl = $this->request->post('returnUrl');
 
         if (!empty($returnUrl)) {
-            $this->redirect($returnUrl);
+            $this->redirect($returnUrl . (strpos($returnUrl, '?') !== false ? '&' : '?') . 'status=' . $status);
         }
 
         return $this;
@@ -95,15 +105,23 @@ class Sync extends Controller
      */
     protected function resetLaposta()
     {
-        $this->model->resetLaposta(
-            $this->request->post('email'),
-            $this->request->post('lapostaApiToken')
-        );
+        $status = 'ok';
+
+        try {
+            $this->model->resetLaposta(
+                $this->request->post('email'),
+                $this->request->post('lapostaApiToken')
+            );
+        }
+        catch (Exception $e) {
+            $this->logger->error($e->getMessage());
+            $status = 'failed';
+        }
 
         $returnUrl = $this->request->post('returnUrl');
 
         if (!empty($returnUrl)) {
-            $this->redirect($returnUrl);
+            $this->redirect($returnUrl . (strpos($returnUrl, '?') !== false ? '&' : '?') . 'status=' . $status);
         }
 
         return $this;

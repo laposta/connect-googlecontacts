@@ -46,6 +46,6 @@ class ClientData extends SecureEntity
      */
     protected function ignore()
     {
-        return array('returnUrl', 'lastImport');
+        return array('returnUrl', 'lastImport', 'email');
     }
 }

@@ -17,7 +17,6 @@ use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
 use Exception;
-use Exception\ExceptionList;
 use Iterator\Abstraction\IteratorFactoryInterface;
 use Iterator\ArrayPathIterator;
 use Iterator\LinkedKeyIterator;
@@ -73,11 +72,11 @@ class SyncFromLaposta extends AbstractCommand
     private $lock;
 
     /**
-     * @param Google            $google
-     * @param Laposta           $laposta
-     * @param Config            $config
-     * @param IteratorFactoryInterface  $iteratorFactory
-     * @param LockableInterface $lock
+     * @param Google                   $google
+     * @param Laposta                  $laposta
+     * @param Config                   $config
+     * @param IteratorFactoryInterface $iteratorFactory
+     * @param LockableInterface        $lock
      */
     function __construct(
         Google $google,
@@ -347,7 +346,6 @@ class SyncFromLaposta extends AbstractCommand
             $this->logger->notice("Unrecognized group '$listId'. Skipping event.");
 
             return;
-
             /*
              * Or create it at your own risk.
              *
@@ -357,14 +355,22 @@ class SyncFromLaposta extends AbstractCommand
             */
         }
 
-        $groupId   = $this->listMap->groups[$listId];
+        $groupId = $this->listMap->groups[$listId];
+        $this->laposta->setFieldMap($this->listMap->groupElements[$listId]->fields);
 
         if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
-            $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
+            $contact = $this->laposta->convertToContact($event['data']);
+
+            $this->logger->debug(
+                "Adding contact to google with data: " . json_encode($contact->toArray(true))
+            );
+
             $this->google->addContact($groupId, $contact);
             $this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
 
-            $this->logger->notice("Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'.");
+            $this->logger->notice(
+                "Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'."
+            );
 
             return;
         }
@@ -373,12 +379,13 @@ class SyncFromLaposta extends AbstractCommand
             $contactId = $this->listMap->groupElements[$listId]->contacts[$memberId];
 
             if ($event['event'] === 'subscribed') {
+
                 $this->google->addContactToGroup($contactId, $groupId);
 
                 $this->logger->info("Added member '$contactId' to group '$groupId'.");
             }
             else if ($event['event'] === 'modified') {
-                $contact = $this->laposta->convertToContact($event['data'], $this->listMap->groupElements[$listId]->fields);
+                $contact      = $this->laposta->convertToContact($event['data']);
                 $contact->gId = $this->listMap->groupElements[$listId]->contacts[$memberId];
                 $this->google->updateContact($groupId, $contact);
 
@@ -389,7 +396,6 @@ class SyncFromLaposta extends AbstractCommand
 
                 $this->logger->info("Removed member '$contactId' from group '$groupId'.");
             }
-
 //            $this->google->getContact($contactId)->dump();
         }
     }
@@ -409,34 +415,31 @@ class SyncFromLaposta extends AbstractCommand
             throw new RuntimeException("Unable to obtain lock for '{$this->clientData->lapostaApiToken}' to handle events '{$serialized}'.");
         }
 
-        $this->clientData->googleTokenSet->refresh_token = $this->clientData->googleRefreshToken;
-        $this->clientData->googleTokenSet->fromArray(
-            $this->google->setAccessToken($this->clientData->googleTokenSet)
-        );
+        try {
+            $this->clientData->googleTokenSet->refresh_token = $this->clientData->googleRefreshToken;
+            $this->clientData->googleTokenSet->fromArray(
+                $this->google->setAccessToken($this->clientData->googleTokenSet)
+            );
 
-        \Laposta::setApiKey($this->clientData->lapostaApiToken);
+            \Laposta::setApiKey($this->clientData->lapostaApiToken);
 
-        if (!isset($this->eventList['data']) || !is_array($this->eventList['data'])) {
-            throw new RuntimeException('No event data provided');
+            if (!isset($this->eventList['data']) || !is_array($this->eventList['data'])) {
+                throw new RuntimeException('No event data provided');
+            }
         }
-
-        $exceptionList = new ExceptionList();
+        catch (Exception $e) {
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+        }
 
         foreach ($this->eventList['data'] as $event) {
             try {
                 $this->consumeEvent($event);
             }
             catch (Exception $e) {
-                $this->logger->error($e->getMessage());
-
-                $exceptionList->append($e);
+                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             }
         }
 
         $this->lock->unlock($this->clientData->lapostaApiToken);
-
-        if ($exceptionList->count() > 0) {
-            throw $exceptionList;
-        }
     }
 }

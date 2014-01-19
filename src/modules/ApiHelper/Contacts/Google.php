@@ -17,6 +17,7 @@ use Google_Http_Request;
 use Google_Http_REST;
 use Iterator\Abstraction\IteratorFactoryInterface as IteratorFactoryInterface;
 use Iterator\ArrayIterator;
+use Logger\Abstraction\LoggerInterface;
 use RuntimeException;
 use SimpleXMLElement;
 
@@ -52,6 +53,11 @@ class Google implements ApiHelperInterface
     private $contactsUrl = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json';
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @var array Mapping of fields to a unique field type identifier
      */
     private $fieldMap = array(
@@ -75,15 +81,18 @@ class Google implements ApiHelperInterface
      * @param Google_Client            $client
      * @param ContactsFactoryInterface $factory
      * @param IteratorFactoryInterface $iteratorFactory
+     * @param LoggerInterface          $logger
      */
     function __construct(
         Google_Client $client,
         ContactsFactoryInterface $factory,
-        IteratorFactoryInterface $iteratorFactory
+        IteratorFactoryInterface $iteratorFactory,
+        LoggerInterface $logger
     ) {
         $this->client          = $client;
         $this->factory         = $factory;
         $this->iteratorFactory = $iteratorFactory;
+        $this->logger          = $logger;
     }
 
     /**
@@ -101,6 +110,8 @@ class Google implements ApiHelperInterface
     {
         $headers = array_merge($headers, array('GData-Version' => '3.0'));
         $request = new Google_Http_Request($url, $method, $headers, $postBody);
+
+        $this->logger->info("Sending '$method' request to google with url '$url'");
 
         $this->client->getAuth()->sign($request);
 
@@ -399,6 +410,9 @@ class Google implements ApiHelperInterface
             $token = json_decode($this->client->getAccessToken(), true);
         }
 
+        $this->groupsUrl   = self::BASE_GROUP_URL . '?alt=json';
+        $this->contactsUrl = self::BASE_CONTACT_URL . '?alt=json';
+
         return $token;
     }
 
@@ -518,6 +532,8 @@ class Google implements ApiHelperInterface
 
         $this->applyContactDefinitionToXml($entry, $contact);
 
+        $this->logger->debug("Posting xml to google: {$entry->asXML()}");
+
         $contact->gId = $this->postContactXml($entry->asXML());
 
         return $contact;
@@ -593,8 +609,15 @@ class Google implements ApiHelperInterface
         // <gContact:groupMembershipInfo deleted='false' href='{$groupId}'/>
 
         /** @var $field Field */
-        foreach ($contact->fields as $field) {
+        foreach ($contact->fields as $key => $field) {
+            if (empty($field->value)) {
+                continue;
+            }
+
+            $this->logger->debug("Mapping field '$key' with identifier '{$field->definition->identifier}' for import to google with value '{$field->value}'.");
+
             switch ($field->definition->identifier) {
+                case 'birthdate':
                 case 'birth_date':
                     /** @var $birthday SimpleXMLElement */
                     $birthday = $gContact->birthday;
@@ -606,6 +629,7 @@ class Google implements ApiHelperInterface
 
                     $birthday->attributes()->when = $field->value;
                     break;
+                case 'surname':
                 case 'family_name':
                     if ($gd->name->count() === 0) {
                         $entry->addChild('name', '', $namespaces['gd']);
@@ -619,6 +643,7 @@ class Google implements ApiHelperInterface
 
                     unset($gd->name->fullName);
                     break;
+                case 'firstname':
                 case 'given_name':
                     if ($gd->name->count() === 0) {
                         $entry->addChild('name', '', $namespaces['gd']);
@@ -656,11 +681,13 @@ class Google implements ApiHelperInterface
                     break;
                 case 'phone':
                     if ($gd->phoneNumber->count() === 0) {
-                        $entry->addChild('phoneNumber', null, $namespaces['gd']);
+                        $phone = $entry->addChild('phoneNumber', null, $namespaces['gd']);
+                        $phone->addAttribute('label', 'Phone');
                     }
 
                     $gd->phoneNumber = $field->value;
                     break;
+                case 'streetaddress':
                 case 'address_street':
                     if ($gd->structuredPostalAddress->count() === 0) {
                         $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
@@ -675,6 +702,7 @@ class Google implements ApiHelperInterface
 
                     unset($gd->structuredPostalAddress->formattedAddress);
                     break;
+                case 'postcode':
                 case 'address_postcode':
                     if ($gd->structuredPostalAddress->count() === 0) {
                         $address = $gd->addChild('structuredPostalAddress', null, $namespaces['gd']);
@@ -689,6 +717,7 @@ class Google implements ApiHelperInterface
 
                     unset($gd->structuredPostalAddress->formattedAddress);
                     break;
+                case 'city':
                 case 'address_city':
                     if ($gd->structuredPostalAddress->count() === 0) {
                         $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
@@ -703,6 +732,7 @@ class Google implements ApiHelperInterface
 
                     unset($gd->structuredPostalAddress->formattedAddress);
                     break;
+                case 'country':
                 case 'address_country':
                     if ($gd->structuredPostalAddress->count() === 0) {
                         $address = $entry->addChild('structuredPostalAddress', null, $namespaces['gd']);
@@ -749,11 +779,11 @@ class Google implements ApiHelperInterface
             }
         }
 
-        if ($gd->structuredPostalAddress->count() === 0) {
+        if (!empty($gd->structuredPostalAddress) && $gd->structuredPostalAddress->count() === 0) {
             $gd->addChild('structuredPostalAddress', null, $namespaces['gd']);
         }
 
-        if ($gd->structuredPostalAddress->formattedAddress->count() === 0) {
+        if (!empty($gd->structuredPostalAddress->formattedAddress) && $gd->structuredPostalAddress->formattedAddress->count() === 0) {
             $gd->structuredPostalAddress->addChild('formattedAddress', null, $namespaces['gd']);
         }
 
@@ -813,7 +843,7 @@ class Google implements ApiHelperInterface
         $this->groupsUrl   = preg_replace('/updated-min=[^&]*/', '', $this->groupsUrl);
         $this->contactsUrl = preg_replace('/updated-min=[^&]*/', '', $this->contactsUrl);
 
-        if (is_null($min)) {
+        if (is_null($min) || $min->getTimestamp() === 0) {
             return;
         }
 

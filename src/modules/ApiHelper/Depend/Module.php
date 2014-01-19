@@ -17,5 +17,7 @@ class Module implements ModuleInterface
     public function register(Manager $dm)
     {
         $dm->implement('ApiHelper\Contacts\Abstraction\FactoryInterface', 'ApiHelper\Contacts\Factory');
+        $dm->describe('ApiHelper\Contacts\Laposta')->setIsShared(false)->setIsCloneable(false);
+        $dm->describe('ApiHelper\Contacts\Google')->setIsShared(false)->setIsCloneable(false);
     }
 }
