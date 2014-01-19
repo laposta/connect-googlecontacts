@@ -3,20 +3,20 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "f02b129e0ea8409676d2ec4c2266ac9a",
+    "hash": "908db01ee0506e7ea8b2635801d0b29b",
     "packages": [
         {
             "name": "codeblanche/depend",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeBlanche/Depend.git",
-                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3"
+                "reference": "0d88869f76b19022b7b353ca2ebce5210d12fb83"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/27f9a6f007027ddc94f6933967611601e0e443d3",
-                "reference": "27f9a6f007027ddc94f6933967611601e0e443d3",
+                "url": "https://api.github.com/repos/CodeBlanche/Depend/zipball/0d88869f76b19022b7b353ca2ebce5210d12fb83",
+                "reference": "0d88869f76b19022b7b353ca2ebce5210d12fb83",
                 "shasum": ""
             },
             "require": {
@@ -49,7 +49,7 @@
                 "injection",
                 "php"
             ],
-            "time": "2013-12-22 14:27:16"
+            "time": "2014-01-17 12:21:49"
         },
         {
             "name": "codeblanche/entity",
