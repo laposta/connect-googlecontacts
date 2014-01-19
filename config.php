@@ -95,11 +95,11 @@ return array(
         /*
          * Client secret from google cloud console.
          */
-        'client_secret' => 'PH9keaXHD0rDDgAV1qSpy_E-',
+        'client_secret' => '0gi-8RfPRbiqvfGq64CvNTMz',
         /*
          * Client id from google cloud console.
          */
-        'client_id'     => '915139937104-frrse699unjsdkmr30kmsvboi1g5hghm.apps.googleusercontent.com',
+        'client_id'     => '1050962775968-aberldkprkq53eg685hu05tgljefrt7l.apps.googleusercontent.com',
         /*
          * The url google will return to after consent screen
          */
@@ -136,5 +136,18 @@ return array(
          * be imported. If 'false' only custom (user created) groups will be imported.
          */
         'allow_system_groups' => false,
+    ),
+    /*
+     * Additional configuration for the locking mechanism.
+     */
+    'lock' => array(
+        /*
+         * Maximum number of seconds to wait for a lock.
+         */
+        'max_wait_seconds' => 15,
+        /*
+         * Interval to test lock state while waiting
+         */
+        'wait_interval' => 0.1,
     ),
 );
