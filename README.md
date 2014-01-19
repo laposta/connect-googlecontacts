@@ -133,7 +133,7 @@ The return url will receive a query string **status** value indicating the succe
 
 ** USE WITH EXTREME CAUTION: ALL LISTS ON THE LAPOSTA ACCOUNT WILL BE REMOVED **
 
-To a laposta bridge the following options must be sent to https://{googleposta_host}/sync/reset using the POST method.
+To reset a laposta bridge the following options must be sent to https://{googleposta_host}/sync/reset using the POST method.
 
 * **email** - Laposta account holder email
 * **lapostaApiToken** - Laposta API key
