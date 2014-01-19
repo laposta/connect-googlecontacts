@@ -383,8 +383,8 @@ class Laposta implements ApiHelperInterface
         foreach ($iterator['custom_fields'] as $key => $value) {
             $type = $key;
 
-            if (isset($tagMap[$key]) && isset($fieldMap[$tagMap[$key]])) {
-                $type = $fieldMap[$tagMap[$key]];
+            if (isset($tagMap[$key]) && isset($this->fieldMap[$tagMap[$key]])) {
+                $type = $this->fieldMap[$tagMap[$key]];
             }
 
             $contact->fields[$type] = $this->factory->createField($type, $value);
