@@ -224,6 +224,13 @@ class Bootstrap
          * Set the default locks directory and default class for LockableInterface
          */
         $this->dm->implement('Lock\Abstraction\LockableInterface', 'Lock\Lock');
-        $this->dm->describe('Lock\Lock', array($config->get('path.lock')));
+        $this->dm->describe(
+            'Lock\Lock',
+            array(
+                 $config->get('path.lock'),
+                 $config->get('lock.max_wait_seconds'),
+                 $config->get('lock.wait_interval'),
+            )
+        );
     }
 }
