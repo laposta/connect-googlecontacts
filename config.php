@@ -94,12 +94,16 @@ return array(
     'google'       => array(
         /*
          * Client secret from google cloud console.
+         *
+         * SET VALUE IN config.local.php
          */
-        'client_secret' => '0gi-8RfPRbiqvfGq64CvNTMz',
+        'client_secret' => '',
         /*
          * Client id from google cloud console.
+         *
+         * SET VALUE IN config.local.php
          */
-        'client_id'     => '1050962775968-aberldkprkq53eg685hu05tgljefrt7l.apps.googleusercontent.com',
+        'client_id'     => '',
         /*
          * The url google will return to after consent screen
          */
@@ -124,8 +128,10 @@ return array(
         'https'          => true,
         /*
          * Key to use for data encryption.
+         *
+         * SET VALUE IN config.local.php
          */
-        'encryption_key' => 'WPOzabpK2V2JGm70Hr091Nl2IUTyD2SgM98fNZEy',
+        'encryption_key' => '',
     ),
     /*
      * Settings for the synchronisation process
