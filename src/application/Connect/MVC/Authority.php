@@ -82,7 +82,7 @@ class Authority extends Controller
             );
         }
         catch (Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             $status = 'failed';
         }
 
@@ -117,7 +117,7 @@ class Authority extends Controller
             }
         }
         catch(Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             $status = 'failed';
         }
 
@@ -141,7 +141,7 @@ class Authority extends Controller
             $this->model->confirmAuthority($this->request->get('code'));
         }
         catch (Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             $status = 'failed';
         }
 

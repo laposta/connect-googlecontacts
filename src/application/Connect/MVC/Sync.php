@@ -87,7 +87,7 @@ class Sync extends Controller
             );
         }
         catch (Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             $status = 'failed';
         }
 
@@ -114,7 +114,7 @@ class Sync extends Controller
             );
         }
         catch (Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             $status = 'failed';
         }
 

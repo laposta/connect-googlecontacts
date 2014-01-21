@@ -66,6 +66,7 @@ class Authority extends Model
 
         $this->clientData->googleTokenSet     = $command->getTokens();
         $this->clientData->googleRefreshToken = $this->clientData->googleTokenSet->refresh_token;
+        $this->clientData->authGranted        = true;
 
         return $this->persist();
     }

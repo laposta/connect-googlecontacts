@@ -362,7 +362,15 @@ class SyncFromGoogle extends AbstractCommand
      */
     public function execute()
     {
+        if (!$this->clientData->authGranted) {
+            $this->logger->info("Authorization to Google contacts not yet granted for '{$this->clientData->email}'. Skipping import.");
+
+            return $this;
+        }
+
         if (!$this->lock->lock($this->clientData->lapostaApiToken)) {
+            $this->logger->info("Unable to retrieve lock for '{$this->clientData->email}'. Skipping import.");
+
             return $this;
         }
 

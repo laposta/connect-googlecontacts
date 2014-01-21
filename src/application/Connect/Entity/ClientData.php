@@ -37,6 +37,11 @@ class ClientData extends SecureEntity
     public $googleRefreshToken;
 
     /**
+     * @var bool
+     */
+    public $authGranted = false;
+
+    /**
      * @var int
      */
     public $lastImport;
@@ -46,6 +51,6 @@ class ClientData extends SecureEntity
      */
     protected function ignore()
     {
-        return array('returnUrl', 'lastImport', 'email');
+        return array('returnUrl', 'lastImport', 'email', 'authGranted');
     }
 }
