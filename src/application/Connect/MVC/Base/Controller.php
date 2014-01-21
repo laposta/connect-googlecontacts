@@ -125,7 +125,7 @@ abstract class Controller extends \MVC\Controller
         echo "<pre>\n";
 
         echo $e->getMessage() . "\n";
-        $this->logger->error($e->getMessage());
+        $this->logger->error("{$e->getMessage()} on line {$e->getLine()} of {$e->getFile()}");
 
         if ($this->config->get('debug.print_backtrace')) {
             echo $e->getTraceAsString() . "\n";

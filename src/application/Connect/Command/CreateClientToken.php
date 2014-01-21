@@ -43,6 +43,7 @@ class CreateClientToken extends AbstractCommand
      */
     public function execute()
     {
-        $this->clientToken = sha1($this->identifier);
+        $parts = explode('@', $this->identifier);
+        $this->clientToken = array_shift($parts);
     }
 }

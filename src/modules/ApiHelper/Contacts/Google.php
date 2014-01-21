@@ -167,6 +167,10 @@ class Google implements ApiHelperInterface
         foreach ($entries as $entry) {
             $entry = $this->iteratorFactory->createArrayPathIterator($entry);
 
+            if (substr($entry['title.$t'], 0, 13) === 'System Group:') {
+                continue;
+            }
+
             $id   = $entry['id.$t'];
             $data = array(
                 'title'    => $entry['title.$t'],
