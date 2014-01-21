@@ -68,6 +68,8 @@ class Authority extends Model
         $this->clientData->googleRefreshToken = $this->clientData->googleTokenSet->refresh_token;
         $this->clientData->authGranted        = true;
 
+        $this->session->destroy();
+
         return $this->persist();
     }
 
