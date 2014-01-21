@@ -421,8 +421,9 @@ class SyncFromGoogle extends AbstractCommand
         }
 
         $this->logger->info('Re-enabling hooks for all groups');
-        $this->laposta->enableHooks($this->listMap->hooks);
         $this->lock->unlock($this->clientData->lapostaApiToken);
+
+        $this->laposta->enableHooks($this->listMap->hooks);
 
         return $this;
     }

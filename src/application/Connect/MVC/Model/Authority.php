@@ -42,8 +42,6 @@ class Authority extends Model
 
         $this->session     = $session;
         $this->clientToken = $session->get('client.token');
-
-        $this->loadClientData();
     }
 
     /**
@@ -59,6 +57,8 @@ class Authority extends Model
         if (empty($googleAuthCode)) {
             throw new RuntimeException("Unable to authorise bridge with auth code '$googleAuthCode'");
         }
+
+        $this->loadClientData();
 
         /** @var $command ConfirmApiBridge */
         $command = $this->getCommandFactory()->create('Connect\Command\ConfirmApiBridge');
@@ -78,6 +78,10 @@ class Authority extends Model
      */
     public function getClientReturnUrl()
     {
+        if (!($this->clientData instanceof ClientData)) {
+            $this->loadClientData();
+        }
+
         return $this->clientData->returnUrl;
     }
 

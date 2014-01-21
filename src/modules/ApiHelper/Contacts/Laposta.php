@@ -507,6 +507,8 @@ class Laposta implements ApiHelperInterface
     public function disableHooks(MultiLinkedKeyIterator $hooks)
     {
         foreach ($hooks as $hookId => $groupId) {
+            $this->logger->debug("Disabling hook '$hookId' for list '$groupId'");
+
             $hook = new Laposta_Webhook($groupId);
 
             $hook->update($hookId, array('blocked' => 'true'));
@@ -523,6 +525,8 @@ class Laposta implements ApiHelperInterface
     public function enableHooks(MultiLinkedKeyIterator $hooks)
     {
         foreach ($hooks as $hookId => $groupId) {
+            $this->logger->debug("Enabling hook '$hookId' for list '$groupId'");
+
             $hook = new Laposta_Webhook($groupId);
 
             $hook->update($hookId, array('blocked' => 'false'));

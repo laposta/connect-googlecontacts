@@ -96,9 +96,8 @@ class LoadClientData extends AbstractCommand
 
         if ($this->dataStore->hasContent()) {
             $this->clientData->fromArray($this->dataStore->getContent());
+            $this->clientData->decode($this->crypto);
         }
-
-        $this->clientData->decode($this->crypto);
 
         return $this;
     }

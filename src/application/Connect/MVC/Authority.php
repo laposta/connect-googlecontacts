@@ -113,7 +113,7 @@ class Authority extends Controller
             if (!empty($redirect)) {
                 $this->redirect($redirect);
 
-                    return $this;
+                return $this;
             }
         }
         catch(Exception $e) {
