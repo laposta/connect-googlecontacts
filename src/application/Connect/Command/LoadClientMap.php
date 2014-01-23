@@ -40,7 +40,6 @@ class LoadClientMap extends AbstractCommand
     {
         $this->config     = $config;
         $this->dataStore  = $dataStore;
-        $this->clientData = new ClientData();
         $this->map        = new ListMap();
     }
 
@@ -83,6 +82,8 @@ class LoadClientMap extends AbstractCommand
         if (empty($this->clientToken)) {
             throw new RuntimeException('Unable to load client mappings. A client token is required.');
         }
+
+        $this->map->clear();
 
         $this->dataStore->retrieve(
             new File($this->config->get('path.data') . '/maps/' . $this->clientToken . '.php')

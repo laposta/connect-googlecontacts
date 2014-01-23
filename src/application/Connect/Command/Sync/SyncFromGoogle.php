@@ -172,6 +172,8 @@ class SyncFromGoogle extends AbstractCommand
         $hostname = $this->config->get('hostname');
         $hookUrl  = $protocol . '://' . $hostname . '/sync/consume-events/?clientToken=' . $this->clientData->token;
 
+        $this->logger->debug("Existing groups are: " . json_encode($this->listMap->groups->toArray()));
+
         /** @var $group Group */
         foreach ($groups as $group) {
             $this->logger->debug("Sychronizing group '$group->title'");
@@ -363,7 +365,9 @@ class SyncFromGoogle extends AbstractCommand
     public function execute()
     {
         if (!$this->clientData->authGranted) {
-            $this->logger->info("Authorization to Google contacts not yet granted for '{$this->clientData->email}'. Skipping import.");
+            $this->logger->info(
+                "Authorization to Google contacts not yet granted for '{$this->clientData->email}'. Skipping import."
+            );
 
             return $this;
         }
@@ -402,28 +406,28 @@ class SyncFromGoogle extends AbstractCommand
             }
         }
 
-        $this->logger->info('Disabling hooks for all groups');
-        $this->laposta->disableHooks($this->listMap->hooks);
+        try {
+            $this->logger->info('Disabling hooks for all groups');
+            $this->laposta->disableHooks($this->listMap->hooks);
 
-        while ($this->google->hasMoreContacts()) {
-            try {
+            while ($this->google->hasMoreContacts()) {
                 $this->synchronizeContacts($this->google->getContacts());
             }
-            catch (Laposta_Error $e) {
-                $this->logger->error(
-                    "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
-                    )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
-                );
-            }
-            catch (Exception $e) {
-                $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
-            }
+
+            $this->logger->info('Re-enabling hooks for all groups');
+            $this->laposta->enableHooks($this->listMap->hooks);
+        }
+        catch (Laposta_Error $e) {
+            $this->logger->error(
+                "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
+                )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+            );
+        }
+        catch (Exception $e) {
+            $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
         }
 
-        $this->logger->info('Re-enabling hooks for all groups');
         $this->lock->unlock($this->clientData->lapostaApiToken);
-
-        $this->laposta->enableHooks($this->listMap->hooks);
 
         return $this;
     }

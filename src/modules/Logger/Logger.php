@@ -21,6 +21,16 @@ class Logger extends AbstractLogger
     private $adapter;
 
     /**
+     * @var string
+     */
+    private $instanceId;
+
+    /**
+     * @var array
+     */
+    private $tags = array();
+
+    /**
      * @var array
      */
     protected $levelMap = array(
@@ -43,8 +53,11 @@ class Logger extends AbstractLogger
      */
     function __construct($logLevel = LogLevel::ERROR, AdapterInterface $adapter = null)
     {
-        $this->logLevel = $this->resolveLevel($logLevel);
-        $this->adapter  = $adapter;
+        $this->logLevel   = $this->resolveLevel($logLevel);
+        $this->adapter    = $adapter;
+        $this->instanceId = base_convert(round(microtime(true) * 1000000), 10, 36);
+
+        $this->addTag($this->instanceId);
     }
 
     /**
@@ -68,7 +81,7 @@ class Logger extends AbstractLogger
      */
     public function log($level, $message, $context = array())
     {
-        if (!($this->logLevel === LogLevel::ANY || $this->resolveLevel($level) <= $this->logLevel)) {
+        if ($this->logLevel !== LogLevel::ANY && $this->resolveLevel($level) > $this->logLevel) {
             return;
         }
 
@@ -76,10 +89,38 @@ class Logger extends AbstractLogger
             $this->adapter = new System();
         }
 
+        $tags = $this->resolveTags();
+
         $this->adapter->send(
             $level,
-            $this->getTimeString() . ' ' . trim($this->interpolate($message, $context))
+            $tags . ' ' . $this->getTimeString() . ' ' . trim($this->interpolate($message, $context))
         );
+    }
+
+    /**
+     * Resolve the message tags.
+     *
+     * @return string
+     */
+    protected function resolveTags()
+    {
+        if (empty($this->tags)) {
+            return '';
+        }
+
+        $tags = '';
+
+        foreach ($this->tags as $name => $value) {
+            $label = '';
+
+            if (is_string($name)) {
+                $label .= $name . ':';
+            }
+
+            $tags .= '[' . $label . $value . ']';
+        }
+
+        return $tags;
     }
 
     /**
@@ -123,8 +164,8 @@ class Logger extends AbstractLogger
      */
     private function resolveLevel($logLevel)
     {
-        if (intval($logLevel) != $logLevel && isset($this->levelMap[(string) $logLevel])) {
-            return $this->levelMap[$logLevel];
+        if (isset($this->levelMap[(string) $logLevel])) {
+            return $this->levelMap[(string) $logLevel];
         }
 
         return $logLevel;
@@ -149,5 +190,47 @@ class Logger extends AbstractLogger
         }
 
         return strtr($message, $replace);
+    }
+
+    /**
+     * Add a tag to be prepended to all log messages
+     *
+     * @param string $value Tag value
+     * @param string $key   Optional name for the tag
+     *
+     * @return $this
+     */
+    public function addTag($value, $key = '')
+    {
+        if (!is_scalar($key) || !is_scalar($value)) {
+            return $this;
+        }
+
+        if (is_string($key) && !empty($key)) {
+            $this->tags[$key] = $value;
+        }
+        else {
+            $this->tags[] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Remove a tag
+     *
+     * @param $key
+     *
+     * @return $this
+     */
+    public function removeTag($key)
+    {
+        if (!isset($this->tags[$key])) {
+            return $this;
+        }
+
+        unset($this->tags[$key]);
+
+        return $this;
     }
 }

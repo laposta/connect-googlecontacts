@@ -5,7 +5,7 @@ namespace Connect\Entity\Abstraction;
 use Entity\Entity;
 use Security\CryptographInterface;
 
-class SecureEntity extends Entity implements SecureEntityInterface
+class SecureEntity extends ClearableEntity implements SecureEntityInterface
 {
     /**
      * @inheritdoc

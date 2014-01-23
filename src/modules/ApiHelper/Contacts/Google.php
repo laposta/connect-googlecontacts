@@ -167,7 +167,7 @@ class Google implements ApiHelperInterface
         foreach ($entries as $entry) {
             $entry = $this->iteratorFactory->createArrayPathIterator($entry);
 
-            if (substr($entry['title.$t'], 0, 13) === 'System Group:') {
+            if (strtolower(substr($entry['title.$t'], 0, 7)) !== 'laposta') {
                 continue;
             }
 

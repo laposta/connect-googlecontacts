@@ -2,12 +2,12 @@
 
 namespace Connect\Entity;
 
-use Entity\Entity;
+use Connect\Entity\Abstraction\ClearableEntity;
 use Connect\Entity\Collection\ListMapGroups;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 
-class ListMap extends Entity
+class ListMap extends ClearableEntity
 {
     /**
      * @var \Iterator\LinkedKeyIterator Laposta group id => Google group id
