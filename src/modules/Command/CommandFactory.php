@@ -48,8 +48,11 @@ class CommandFactory implements FactoryInterface
      */
     public function create($className)
     {
+        /** @var $instance AbstractCommand */
+        $instance = $this->dependencyManager->get($className);
+
         /** @var $clone AbstractCommand */
-        $clone = clone $this->dependencyManager->get($className);
+        $clone = clone $instance;
 
         if ($clone instanceof LoggerAwareInterface) {
             $clone->setLogger($this->logger);

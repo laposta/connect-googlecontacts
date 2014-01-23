@@ -54,7 +54,7 @@ class File implements AdapterInterface
     public function send($level, $log)
     {
         error_log(
-            '[' . strtoupper($level) . '] ' . trim($log) . "\n",
+            '[' . strtoupper($level) . ']' . $log . "\n",
             3,
             $this->dirPath . '/' . date('Y-m-d') . '.log'
         );

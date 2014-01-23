@@ -16,6 +16,7 @@ use Exception\ExceptionList;
 use Exception;
 use Lock\Abstraction\LockableInterface;
 use Logger\Abstraction\LoggerInterface;
+use Logger\Logger;
 use RegexIterator;
 use RuntimeException;
 use SplFileInfo;
@@ -65,13 +66,13 @@ class Cli extends Model
      */
     public function importFromGoogle($dataDir)
     {
+        if (!file_exists($dataDir) || !is_dir($dataDir)) {
+            throw new RuntimeException("Unable to load clients from '$dataDir'. Given path is not a directory.");
+        }
+
         $lockIdentifier = __CLASS__;
         if (!$this->lock->lock($lockIdentifier)) {
             throw new RuntimeException("Unable to obtain lock for '{$lockIdentifier}'.");
-        }
-
-        if (!file_exists($dataDir) || !is_dir($dataDir)) {
-            throw new RuntimeException("Unable to load clients from '$dataDir'. Given path is not a directory.");
         }
 
         $this->logger->info("Scanning directory '$dataDir' for bridges.");
@@ -99,11 +100,6 @@ class Cli extends Model
                 $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
 
                 $this->persist();
-            }
-            catch (ExceptionList $e) {
-                foreach ($e->getList() as $exception) {
-                    $this->logger->error("{$exception->getMessage()} on line '{$exception->getLine()}' of '{$exception->getFile()}'");
-                }
             }
             catch (Exception $e) {
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");

@@ -2,9 +2,9 @@
 
 namespace Connect\Entity;
 
-use Entity\Entity;
+use Connect\Entity\Abstraction\ClearableEntity;
 
-class ListMapGroup extends Entity
+class ListMapGroup extends ClearableEntity
 {
     /**
      * @var \Iterator\LinkedKeyIterator Laposta field id => internal field id

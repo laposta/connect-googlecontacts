@@ -92,6 +92,8 @@ class LoadClientData extends AbstractCommand
             throw new RuntimeException('Unable to load client data. A client token is required.');
         }
 
+        $this->clientData->clear();
+
         $this->dataStore->retrieve(new File($this->config->get('path.data') . '/' . $this->clientToken . '.php'));
 
         if ($this->dataStore->hasContent()) {
