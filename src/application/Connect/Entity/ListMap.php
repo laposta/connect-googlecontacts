@@ -4,11 +4,17 @@ namespace Connect\Entity;
 
 use Connect\Entity\Abstraction\ClearableEntity;
 use Connect\Entity\Collection\ListMapGroups;
+use Iterator\ArrayIterator;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 
 class ListMap extends ClearableEntity
 {
+    /**
+     * @var \Iterator\LinkedKeyIterator Google group title => Google group id
+     */
+    public $groupTitles;
+
     /**
      * @var \Iterator\LinkedKeyIterator Laposta group id => Google group id
      */
@@ -39,6 +45,10 @@ class ListMap extends ClearableEntity
     {
         if (!is_traversable($value)) {
             $value = array();
+        }
+
+        if ($name === 'groupTitles' && !($value instanceof LinkedKeyIterator)) {
+            $value = new LinkedKeyIterator($value);
         }
 
         if ($name === 'groups' && !($value instanceof LinkedKeyIterator)) {

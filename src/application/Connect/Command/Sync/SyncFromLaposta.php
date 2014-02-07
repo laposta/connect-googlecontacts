@@ -220,12 +220,10 @@ class SyncFromLaposta extends AbstractCommand
             $this->listMap->groups[$lapId] = $group->gId;
 
             if (!isset($this->listMap->groupElements[$lapId])) {
-                $this->listMap->groupElements[$lapId] = new ListMapGroup(
-                    array(
-                         'fields'   => new LinkedKeyIterator(),
-                         'contacts' => new LinkedKeyIterator(),
-                    )
-                );
+                $this->listMap->groupElements[$lapId] = new ListMapGroup(array(
+                                                                             'fields'   => new LinkedKeyIterator(),
+                                                                             'contacts' => new LinkedKeyIterator(),
+                                                                         ));
             }
         }
     }
@@ -359,7 +357,8 @@ class SyncFromLaposta extends AbstractCommand
         $this->laposta->setFieldMap($this->listMap->groupElements[$listId]->fields);
 
         if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
-            $contact = $this->laposta->convertToContact($event['data']);
+            $contact         = $this->laposta->convertToContact($event['data']);
+            $contact->groups = $this->resolveGroupId($contact->groups);
 
             $this->logger->debug(
                 "Adding contact to google with data: " . json_encode($contact->toArray(true))
@@ -379,14 +378,15 @@ class SyncFromLaposta extends AbstractCommand
             $contactId = $this->listMap->groupElements[$listId]->contacts[$memberId];
 
             if ($event['event'] === 'subscribed') {
-
                 $this->google->addContactToGroup($contactId, $groupId);
 
                 $this->logger->info("Added member '$contactId' to group '$groupId'.");
             }
             else if ($event['event'] === 'modified') {
-                $contact      = $this->laposta->convertToContact($event['data']);
-                $contact->gId = $this->listMap->groupElements[$listId]->contacts[$memberId];
+                $contact         = $this->laposta->convertToContact($event['data']);
+                $contact->groups = $this->resolveGroupId($contact->groups);
+                $contact->gId    = $this->listMap->groupElements[$listId]->contacts[$memberId];
+
                 $this->google->updateContact($groupId, $contact);
 
                 $this->logger->info("Updated member '$contactId'.");
@@ -396,8 +396,37 @@ class SyncFromLaposta extends AbstractCommand
 
                 $this->logger->info("Removed member '$contactId' from group '$groupId'.");
             }
-//            $this->google->getContact($contactId)->dump();
         }
+    }
+
+    /**
+     * Convert google name/title to an google id.
+     *
+     * @param string|array $name
+     *
+     * @return string|array
+     */
+    protected function resolveGroupId($name)
+    {
+        if ($name instanceof \ArrayIterator) {
+            $name = $name->getArrayCopy();
+        }
+
+        if (is_array($name)) {
+            return array_unique(array_map(array($this, 'resolveGroupId'), $name));
+        }
+
+        $result = $this->listMap->groupTitles->secondary($name);
+
+        if (empty($result)) {
+            $result = $name;
+        }
+
+        $this->logger->debug(
+            "Resolved id for group '{$name}' to '$result'"
+        );
+
+        return $result;
     }
 
     /**

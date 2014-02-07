@@ -7,6 +7,7 @@ use ApiHelper\Contacts\Entity\Collection\Fields;
 use ApiHelper\Contacts\Entity\Collection\Groups;
 use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\FieldDefinition;
 use ApiHelper\Contacts\Entity\Group;
 use ApiHelper\Contacts\Google;
 use ApiHelper\Contacts\Laposta;
@@ -178,6 +179,12 @@ class SyncFromGoogle extends AbstractCommand
         foreach ($groups as $group) {
             $this->logger->debug("Sychronizing group '$group->title'");
 
+            $this->listMap->groupTitles[$group->gId] = $group->title;
+
+            if (strtolower(substr($group->title, 0, 7)) !== 'laposta') {
+                continue;
+            }
+
             $lapId = null;
 
             if (isset($this->listMap->groups[$group->gId])) {
@@ -205,12 +212,10 @@ class SyncFromGoogle extends AbstractCommand
             $this->listMap->groups[$lapId] = $group->gId;
 
             if (!isset($this->listMap->groupElements[$lapId])) {
-                $this->listMap->groupElements[$lapId] = new ListMapGroup(
-                    array(
-                         'fields'   => new MultiLinkedKeyIterator(),
-                         'contacts' => new LinkedKeyIterator(),
-                    )
-                );
+                $this->listMap->groupElements[$lapId] = new ListMapGroup(array(
+                                                                             'fields'   => new MultiLinkedKeyIterator(),
+                                                                             'contacts' => new LinkedKeyIterator(),
+                                                                         ));
             }
         }
     }
@@ -239,8 +244,7 @@ class SyncFromGoogle extends AbstractCommand
             }
             catch (Laposta_Error $e) {
                 $this->logger->error(
-                    "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
-                    )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                    "{$e->getMessage()} with code '{$e->getHttpStatus()}'"
                 );
             }
             catch (Exception $e) {
@@ -348,12 +352,53 @@ class SyncFromGoogle extends AbstractCommand
                 $groupElements->fields[$field->definition->identifier] = $lapId;
                 $this->listMap->tags[$field->definition->tag]          = $field->definition->identifier;
             }
+            elseif ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+                $this->logger->debug(
+                    "Updating options for field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
+                );
+
+                $field->lapId               = $lapId;
+                $field->definition->options = $this->resolveGroupName($field->definition->options);
+                $field->value               = implode('|', $this->resolveGroupName(explode('|', $field->value)));
+
+                $this->laposta->updateField($lapGroupId, $field);
+            }
             else {
                 $this->logger->debug(
                     "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
                 );
             }
         }
+    }
+
+    /**
+     * Convert google group id to a name/title.
+     *
+     * @param string|array $gGroupId
+     *
+     * @return string|array
+     */
+    protected function resolveGroupName($gGroupId)
+    {
+        if ($gGroupId instanceof \ArrayIterator) {
+            $gGroupId = $gGroupId->getArrayCopy();
+        }
+
+        if (is_array($gGroupId)) {
+            return array_unique(array_map(array($this, 'resolveGroupName'), $gGroupId));
+        }
+
+        $result = $this->listMap->groupTitles->primary($gGroupId);
+
+        if (empty($result)) {
+            $result = $gGroupId;
+        }
+
+        $this->logger->debug(
+            "Resolved name for group '{$gGroupId}' to '$result'"
+        );
+
+        return $result;
     }
 
     /**
@@ -410,6 +455,8 @@ class SyncFromGoogle extends AbstractCommand
             $this->logger->info('Disabling hooks for all groups');
             $this->laposta->disableHooks($this->listMap->hooks);
 
+            $this->google->setGroupsOptions(array_values($this->listMap->groupTitles->toArray()));
+
             while ($this->google->hasMoreContacts()) {
                 $this->synchronizeContacts($this->google->getContacts());
             }
@@ -419,8 +466,8 @@ class SyncFromGoogle extends AbstractCommand
         }
         catch (Laposta_Error $e) {
             $this->logger->error(
-                "{$e->getMessage()} with code '{$e->getHttpStatus()}' and response '{$e->getJsonBody(
-                )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                "{$e->getMessage()} with code '{$e->getHttpStatus(
+                )}'" //  and response '{$e->getJsonBody()}' on line '{$e->getLine()}' of '{$e->getFile()}'
             );
         }
         catch (Exception $e) {

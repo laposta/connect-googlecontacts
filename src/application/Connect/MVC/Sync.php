@@ -110,7 +110,8 @@ class Sync extends Controller
         try {
             $this->model->resetLaposta(
                 $this->request->post('email'),
-                $this->request->post('lapostaApiToken')
+                $this->request->post('lapostaApiToken'),
+                $this->request->post('hard') === 1
             );
         }
         catch (Exception $e) {

@@ -52,7 +52,7 @@ class FieldDefinition extends Entity
     public $showInList = false;
 
     /**
-     * @var \ArrayIterator
+     * @var array
      */
     public $options = array();
 
@@ -60,4 +60,9 @@ class FieldDefinition extends Entity
      * @var string
      */
     public $tag;
+
+    /**
+     * @var bool
+     */
+    public $synchronised = false;
 } 
