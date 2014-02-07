@@ -9,6 +9,7 @@ use ApiHelper\Contacts\Entity\Collection\Fields;
 use ApiHelper\Contacts\Entity\Collection\Groups;
 use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
+use ApiHelper\Contacts\Entity\FieldDefinition;
 use ApiHelper\Contacts\Entity\Group;
 use DateTime;
 use Entity\Exception\RuntimeException;
@@ -86,11 +87,11 @@ class Laposta implements ApiHelperInterface
      */
     public function getGroups()
     {
-//        $list = new Laposta_List();
-//
-//        $result = $list->all();
-//
-//        $this->hasMoreGroups = false;
+        //        $list = new Laposta_List();
+        //
+        //        $result = $list->all();
+        //
+        //        $this->hasMoreGroups = false;
     }
 
     /**
@@ -115,7 +116,7 @@ class Laposta implements ApiHelperInterface
         $list         = new Laposta_List();
         $result       = $list->create(
             array(
-                 'name' => $group->title,
+                'name' => $group->title,
             )
         );
         $result       = $this->iteratorFactory->createArrayPathIterator($result);
@@ -186,7 +187,13 @@ class Laposta implements ApiHelperInterface
             }
 
             $cleanTag          = trim($tag, '{}');
-            $result[$cleanTag] = $field->value;
+            $value             = $field->value;
+
+            if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE) {
+                $value = explode('|', $value);
+            }
+
+            $result[$cleanTag] = $value;
         }
 
         return $result;
@@ -252,19 +259,24 @@ class Laposta implements ApiHelperInterface
         }
 
         $lapField = new \Laposta_Field($groupId);
-        $result   = $lapField->create(
-            array(
-                 'name'         => $field->definition->name,
-                 'datatype'     => $field->definition->type,
-                 'defaultvalue' => $field->definition->defaultValue,
-                 'required'     => $field->definition->required ? 'true' : 'false',
-                 'in_form'      => $field->definition->showInForm ? 'true' : 'false',
-                 'in_list'      => $field->definition->showInList ? 'true' : 'false',
-            )
+        $meta     = array(
+            'name'         => $field->definition->name,
+            'datatype'     => $field->definition->type,
+            'defaultvalue' => $field->definition->defaultValue,
+            'required'     => $field->definition->required ? 'true' : 'false',
+            'in_form'      => $field->definition->showInForm ? 'true' : 'false',
+            'in_list'      => $field->definition->showInList ? 'true' : 'false',
         );
-        $result   = $this->iteratorFactory->createArrayPathIterator($result);
+
+        if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+            $meta['options'] = $field->definition->options;
+        }
+
+        $result = $lapField->create($meta);
+        $result = $this->iteratorFactory->createArrayPathIterator($result);
 
         $field->definition->tag = $result['field.tag'];
+        $field->definition->synchronised = true;
         $field->lapId           = $result['field.field_id'];
 
         return $result['field.field_id'];
@@ -280,6 +292,33 @@ class Laposta implements ApiHelperInterface
      */
     public function updateField($groupId, Field $field)
     {
+        if ($field->definition->synchronised) {
+            return $field->lapId;
+        }
+
+        if (isset($this->fieldCache[$groupId])) {
+            unset($this->fieldCache[$groupId]);
+        }
+
+        $lapField = new \Laposta_Field($groupId);
+        $meta     = array(
+            'name'         => $field->definition->name,
+            'datatype'     => $field->definition->type,
+            'defaultvalue' => $field->definition->defaultValue,
+            'required'     => $field->definition->required ? 'true' : 'false',
+            'in_form'      => $field->definition->showInForm ? 'true' : 'false',
+            'in_list'      => $field->definition->showInList ? 'true' : 'false',
+        );
+
+        if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+            $meta['options'] = $field->definition->options;
+        }
+
+        $lapField->update($field->lapId, $meta);
+
+        $field->definition->synchronised = true;
+
+        return $field->lapId;
     }
 
     /**
@@ -311,8 +350,8 @@ class Laposta implements ApiHelperInterface
         $result = $this->iteratorFactory->createArrayPathIterator($list->get($identifier));
         $group  = $this->factory->createGroup(
             array(
-                 'title'  => $result['list.name'],
-                 '$lapId' => $result['list.list_id'],
+                'title'  => $result['list.name'],
+                '$lapId' => $result['list.list_id'],
             )
         );
 
@@ -346,7 +385,10 @@ class Laposta implements ApiHelperInterface
     public function convertToContact(array $data)
     {
         if (!($this->fieldMap instanceof LinkedKeyIterator) || $this->fieldMap->count() === 0) {
-            throw new RuntimeException('Unable to convert to contact without the field map. Map given was: ' . var_export($this->fieldMap, true));
+            throw new RuntimeException('Unable to convert to contact without the field map. Map given was: ' . var_export(
+                                           $this->fieldMap,
+                                           true
+                                       ));
         }
 
         /*
@@ -365,6 +407,7 @@ class Laposta implements ApiHelperInterface
 					"country": "Netherlands",
 					"website": "http://codeblanche.com",
 					"notes": "Angus is the best!",
+                    "groups": ["",""],
 					"anotherfield": "with some other information",
 					"whatthe": "other field"
                 }
@@ -383,12 +426,18 @@ class Laposta implements ApiHelperInterface
         foreach ($iterator['custom_fields'] as $key => $value) {
             $type = $key;
 
+            if ($type === 'groups') {
+                continue;
+            }
+
             if (isset($tagMap[$key]) && isset($this->fieldMap[$tagMap[$key]])) {
                 $type = $this->fieldMap[$tagMap[$key]];
             }
 
             $contact->fields[$type] = $this->factory->createField($type, $value);
         }
+
+        $contact->groups = $iterator['custom_fields.groups'];
 
         return $contact;
     }
@@ -483,9 +532,9 @@ class Laposta implements ApiHelperInterface
 
             $result = $hook->create(
                 array(
-                     'event'   => $event,
-                     'url'     => $callbackUrl,
-                     'blocked' => 'false',
+                    'event'   => $event,
+                    'url'     => $callbackUrl,
+                    'blocked' => 'false',
                 )
             );
 

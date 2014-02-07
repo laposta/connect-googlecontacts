@@ -77,6 +77,12 @@ class Factory implements FactoryInterface
         'notes'            => array(
             'name' => 'Notes',
         ),
+        'groups'            => array(
+            'name'       => 'Groups',
+            'showInForm' => false,
+            'showInList' => false,
+            'type'       => FieldDefinition::TYPE_SELECT_MULTIPLE,
+        ),
     );
 
     /**
@@ -127,12 +133,32 @@ class Factory implements FactoryInterface
      */
     public function createField($type, $value)
     {
-        $field = new Field(
-            array(
-                 'definition' => $this->createFieldDefinition($type),
-                 'value'      => $value,
-            )
+        if ($value instanceof \ArrayIterator) {
+            $value = $value->getArrayCopy();
+        }
+
+        $options = array();
+
+        if (is_array($value)) {
+            $options = $value;
+            $value   = implode('|', $value);
+        }
+
+        $fieldData = array(
+            'definition' => $this->createFieldDefinition($type),
+            'value'      => $value,
         );
+        $field     = new Field($fieldData);
+
+        if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE) {
+            foreach ($options as $option) {
+                if (in_array($option, $field->definition->options)) {
+                    continue;
+                }
+
+                array_push($field->definition->options, $option);
+            }
+        }
 
         return $field;
     }

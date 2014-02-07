@@ -84,18 +84,18 @@ class Sync extends Model
         return $this;
     }
 
-
     /**
      * Reset and remove all lists from Laposta.
      *
      * @param string $email    Laposta account email
      * @param string $apiToken Laposta API token
+     * @param bool   $hard     Hard reset deletes existing mappings
      *
      * @throws \RuntimeException
      * @throws \Exception
      * @return $this
      */
-    public function resetLaposta($email, $apiToken)
+    public function resetLaposta($email, $apiToken, $hard = false)
     {
         $this->clientToken = $this->createClientToken($email);
 
@@ -105,22 +105,30 @@ class Sync extends Model
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
-        $this->loadClientMap();
+        $this->clientData->lastImport = 0;
 
-        try {
-            /** @var $command SyncFromGoogle */
-            $command = $this->getCommandFactory()->create('Connect\Command\Sync\RemoveAllFromLaposta');
-            $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
+        if ($hard === true) {
+            $this->loadClientMap();
 
-            $this->persist();
+            try {
+                /** @var $command SyncFromGoogle */
+                $command = $this->getCommandFactory()->create('Connect\Command\Sync\RemoveAllFromLaposta');
+                $command->setClientData($this->clientData)->setListMap($this->clientMap)->execute();
 
-            /** @var $command PurgeClientMap */
-            $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientMap');
-            $command->setClientToken($this->clientToken)->execute();
+                $this->persist();
+
+                /** @var $command PurgeClientMap */
+                $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientMap');
+                $command->setClientToken($this->clientToken)->execute();
+            }
+            catch (Exception $e) {
+                throw $e;
+            }
         }
-        catch (Exception $e) {
-            throw $e;
-        }
+
+        /** @var $command StoreClientData */
+        $command = $this->getCommandFactory()->create('Connect\Command\StoreClientData');
+        $command->setClientToken($this->clientToken)->setClientData($this->clientData)->execute();
 
         return $this;
     }

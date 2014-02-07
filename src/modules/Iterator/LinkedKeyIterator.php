@@ -26,6 +26,44 @@ class LinkedKeyIterator extends ArrayIterator
     protected $isDirty = true;
 
     /**
+     * Get the value for given index from the primary iterator
+     *
+     * @param $index
+     *
+     * @return mixed
+     */
+    public function primary($index)
+    {
+        if (!parent::offsetExists($index)) {
+            return null;
+        }
+
+        return parent::offsetGet($index);
+    }
+
+    /**
+     * Get the value for given index from the secondary (linked) iterator
+     *
+     * @param string $index
+     *
+     * @return mixed
+     */
+    public function secondary($index)
+    {
+        if ($this->isDirty) {
+            $this->resetSecondary();
+
+            $this->isDirty = false;
+        }
+
+        if (!$this->secondary->offsetExists($index)) {
+            return null;
+        }
+
+        return $this->secondary->offsetGet($index);
+    }
+
+    /**
      * Initialize the linked key iterator
      */
     protected function resetSecondary()

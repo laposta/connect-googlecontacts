@@ -58,6 +58,11 @@ class Google implements ApiHelperInterface
     private $logger;
 
     /**
+     * @var array
+     */
+    protected $groupsOptions = array();
+
+    /**
      * @var array Mapping of fields to a unique field type identifier
      */
     private $fieldMap = array(
@@ -167,10 +172,6 @@ class Google implements ApiHelperInterface
         foreach ($entries as $entry) {
             $entry = $this->iteratorFactory->createArrayPathIterator($entry);
 
-            if (strtolower(substr($entry['title.$t'], 0, 7)) !== 'laposta') {
-                continue;
-            }
-
             $id   = $entry['id.$t'];
             $data = array(
                 'title'    => $entry['title.$t'],
@@ -270,6 +271,14 @@ class Google implements ApiHelperInterface
 
             $fields[$type] = $this->factory->createField($type, $entry[$path]);
         }
+
+        /** @var $groups Field */
+        $groups                      = $this->factory->createField(
+            'groups',
+            $this->normalizeGroupMemberships($entry['gContact$groupMembershipInfo'])
+        );
+        $groups->definition->options = $this->groupsOptions;
+        $fields['groups']            = $groups;
 
         if (!isset($entry['gContact$userDefinedField'])) {
             return $fields;
@@ -531,8 +540,11 @@ class Google implements ApiHelperInterface
             <atom:category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/contact/2008#contact'/>
             </atom:entry>";
 
-        $contact->groups = new ArrayIterator(array($groupId));
-        $entry           = simplexml_load_string($xmlString);
+        if (!in_array($groupId, $contact->groups->getArrayCopy())) {
+            $contact->groups[] = $groupId;
+        }
+
+        $entry = simplexml_load_string($xmlString);
 
         $this->applyContactDefinitionToXml($entry, $contact);
 
@@ -553,8 +565,11 @@ class Google implements ApiHelperInterface
      */
     public function updateContact($groupId, Contact $contact)
     {
-        $contact->groups = new ArrayIterator(array($groupId));
-        $entry           = $this->getContactXml($contact->gId);
+        if (!in_array($groupId, $contact->groups->getArrayCopy())) {
+            $contact->groups[] = $groupId;
+        }
+
+        $entry = $this->getContactXml($contact->gId);
 
         $this->applyContactDefinitionToXml($entry, $contact);
 
@@ -618,7 +633,9 @@ class Google implements ApiHelperInterface
                 continue;
             }
 
-            $this->logger->debug("Mapping field '$key' with identifier '{$field->definition->identifier}' for import to google with value '{$field->value}'.");
+            $this->logger->debug(
+                "Mapping field '$key' with identifier '{$field->definition->identifier}' for import to google with value '{$field->value}'."
+            );
 
             switch ($field->definition->identifier) {
                 case 'birthdate':
@@ -787,7 +804,9 @@ class Google implements ApiHelperInterface
             $gd->addChild('structuredPostalAddress', null, $namespaces['gd']);
         }
 
-        if (!empty($gd->structuredPostalAddress->formattedAddress) && $gd->structuredPostalAddress->formattedAddress->count() === 0) {
+        if (!empty($gd->structuredPostalAddress->formattedAddress) && $gd->structuredPostalAddress->formattedAddress->count(
+            ) === 0
+        ) {
             $gd->structuredPostalAddress->addChild('formattedAddress', null, $namespaces['gd']);
         }
 
@@ -801,8 +820,18 @@ class Google implements ApiHelperInterface
             )
         );
 
+        $this->logger->debug("Assigning groups to contact XML: " . json_encode($contact->groups));
+
         /*
-         * Add the group memberships
+         * Remove all group memberships
+         */
+        $count = $gContact->groupMembershipInfo->count();
+        for ($i = 0; $i < $count - 1; $i++) {
+            unset($gContact->groupMembershipInfo[$i]);
+        }
+
+        /*
+         * Add the group memberships assigned to the contact
          */
         foreach ($contact->groups as $groupId) {
             $group = $this->filter($gContact->groupMembershipInfo, 'href', $groupId);
@@ -813,6 +842,8 @@ class Google implements ApiHelperInterface
                 $group->addAttribute('href', $groupId);
             }
         }
+
+        $this->logger->debug("Updated entry: \n" . $entry->asXML());
     }
 
     /**
@@ -970,5 +1001,17 @@ class Google implements ApiHelperInterface
         $result = simplexml_load_string($response);
 
         return (string) $result->id;
+    }
+
+    /**
+     * @param array $groupsOptions
+     *
+     * @return Google
+     */
+    public function setGroupsOptions($groupsOptions)
+    {
+        $this->groupsOptions = $groupsOptions;
+
+        return $this;
     }
 }
