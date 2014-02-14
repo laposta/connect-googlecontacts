@@ -438,10 +438,10 @@ class SyncFromLaposta extends AbstractCommand
      */
     public function execute()
     {
-        if (!$this->lock->lock($this->clientData->lapostaApiToken)) {
+        if (!$this->lock->lock($this->clientData->email)) {
             $serialized = serialize($this->eventList);
 
-            throw new RuntimeException("Unable to obtain lock for '{$this->clientData->lapostaApiToken}' to handle events '{$serialized}'.");
+            throw new RuntimeException("Unable to obtain lock for '{$this->clientData->email}' to handle events '{$serialized}'.");
         }
 
         try {
@@ -469,6 +469,6 @@ class SyncFromLaposta extends AbstractCommand
             }
         }
 
-        $this->lock->unlock($this->clientData->lapostaApiToken);
+        $this->lock->unlock($this->clientData->email);
     }
 }

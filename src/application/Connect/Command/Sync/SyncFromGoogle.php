@@ -417,7 +417,7 @@ class SyncFromGoogle extends AbstractCommand
             return $this;
         }
 
-        if (!$this->lock->lock($this->clientData->lapostaApiToken)) {
+        if (!$this->lock->lock($this->clientData->email)) {
             $this->logger->info("Unable to retrieve lock for '{$this->clientData->email}'. Skipping import.");
 
             return $this;
@@ -474,7 +474,7 @@ class SyncFromGoogle extends AbstractCommand
             $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
         }
 
-        $this->lock->unlock($this->clientData->lapostaApiToken);
+        $this->lock->unlock($this->clientData->email);
 
         return $this;
     }

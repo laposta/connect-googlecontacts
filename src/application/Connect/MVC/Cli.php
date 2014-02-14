@@ -2,6 +2,7 @@
 
 namespace Connect\MVC;
 
+use Cli\CliHelper;
 use Config\Config;
 use Connect\MVC\Base\Controller;
 use Connect\MVC\Model\Cli as CliModel;
@@ -23,12 +24,18 @@ class Cli extends Controller
     protected $model;
 
     /**
+     * @var CliHelper
+     */
+    protected $cli;
+
+    /**
      * @param Web             $web
      * @param CliModel        $model
      * @param CliView         $view
      * @param Config          $config
      * @param Resolver        $pathResolver
      * @param LoggerInterface $logger
+     * @param CliHelper       $cli
      */
     function __construct(
         Web $web,
@@ -36,9 +43,12 @@ class Cli extends Controller
         CliView $view,
         Config $config,
         Resolver $pathResolver,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        CliHelper $cli
     ) {
         parent::__construct($web, $model, $view, $config, $pathResolver, $logger);
+
+        $this->cli = $cli;
     }
 
     /**
@@ -48,6 +58,12 @@ class Cli extends Controller
      */
     public function run($params = array())
     {
+        if ($this->cli->isCli() && $this->cli->countProcesses() > 1) {
+            $this->logger->info("Command '{$this->cli->getCurrentCommand()}' is already running. Exiting.");
+
+            return;
+        }
+
         $action = '';
 
         if (isset($params['action'])) {

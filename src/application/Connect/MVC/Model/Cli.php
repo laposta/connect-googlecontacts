@@ -70,11 +70,6 @@ class Cli extends Model
             throw new RuntimeException("Unable to load clients from '$dataDir'. Given path is not a directory.");
         }
 
-        $lockIdentifier = __CLASS__;
-        if (!$this->lock->lock($lockIdentifier)) {
-            throw new RuntimeException("Unable to obtain lock for '{$lockIdentifier}'.");
-        }
-
         $this->logger->info("Scanning directory '$dataDir' for bridges.");
 
         $directory = new DirectoryIterator($dataDir);
@@ -105,8 +100,6 @@ class Cli extends Model
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             }
         }
-
-        $this->lock->unlock($lockIdentifier);
 
         return $this;
     }

@@ -2,8 +2,14 @@
 
 namespace Connect\MVC;
 
+use Cli\CliHelper;
+use Config\Config;
 use Connect\MVC\Base\Controller;
-use Connect\MVC\View;
+use Connect\MVC\Base\Model;
+use Connect\MVC\Base\View;
+use Logger\Abstraction\LoggerInterface;
+use Path\Resolver;
+use Web\Web;
 
 /**
  * Class Main
@@ -12,6 +18,34 @@ use Connect\MVC\View;
  */
 class Main extends Controller
 {
+    /**
+     * @var CliHelper
+     */
+    protected $cli;
+
+    /**
+     * @param Web             $web
+     * @param Model           $model
+     * @param View            $view
+     * @param Config          $config
+     * @param Resolver        $pathResolver
+     * @param LoggerInterface $logger
+     * @param CliHelper       $cli
+     */
+    function __construct(
+        Web $web,
+        Model $model,
+        View $view,
+        Config $config,
+        Resolver $pathResolver,
+        LoggerInterface $logger,
+        CliHelper $cli
+    ) {
+        parent::__construct($web, $model, $view, $config, $pathResolver, $logger);
+
+        $this->cli = $cli;
+    }
+
     /**
      * Setup the routing rules
      *
@@ -34,10 +68,13 @@ class Main extends Controller
      */
     public function run($params = array())
     {
-        if (php_sapi_name() === 'cli') {
-            global $argv;
+        if ($this->cli->isCli()) {
+            $action = $this->cli->getArg(1);
 
-            $action = isset($argv[1]) ? $argv[1] : 'no-op';
+            if (empty($action)) {
+                $action = 'no-op';
+            }
+
             $path   = "/cli/$action";
         }
         else {

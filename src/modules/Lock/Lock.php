@@ -8,6 +8,11 @@ use Lock\Abstraction\LockableInterface;
 class Lock implements LockableInterface
 {
     /**
+     * Chars to be filtered from strings used as file names.
+     */
+    const RESERVED_FILENAME_CHARS = '/\?%*o:|o"<>. ';
+
+    /**
      * @var string
      */
     protected $lockDir;
@@ -21,6 +26,11 @@ class Lock implements LockableInterface
      * @var float
      */
     protected $waitInterval;
+
+    /**
+     * @var int
+     */
+    protected $autoExpireAfter = 300; // default 5 minutes
 
     /**
      * Default constructor
@@ -85,7 +95,19 @@ class Lock implements LockableInterface
      */
     public function isLocked($name)
     {
-        return file_exists($this->lockDir . '/' . $this->resolveKey($name));
+        $file = $this->lockDir . '/' . $this->resolveKey($name);
+
+        if (!file_exists($file)) {
+            return false;
+        }
+
+        if (filemtime($file) < time() - $this->autoExpireAfter) {
+            unlink($file);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -109,6 +131,10 @@ class Lock implements LockableInterface
      */
     protected function resolveKey($name)
     {
-        return md5($name);
+        return preg_replace(
+            array('/\s+/', '/['. preg_quote(self::RESERVED_FILENAME_CHARS, '/').']+/i'),
+            array('-', ''),
+            $name
+        );
     }
 }
