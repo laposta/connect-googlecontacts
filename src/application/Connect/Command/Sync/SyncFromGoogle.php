@@ -181,7 +181,7 @@ class SyncFromGoogle extends AbstractCommand
 
             $this->listMap->groupTitles[$group->gId] = $group->title;
 
-            if (strtolower(substr($group->title, 0, 7)) !== 'laposta') {
+            if (preg_match('/^(laposta|mailing)/i', $group->title) !== 1) {
                 continue;
             }
 
