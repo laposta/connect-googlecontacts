@@ -363,8 +363,19 @@ class SyncFromGoogle extends AbstractCommand
                     "Updating options for field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
                 );
 
+                $groupNames = $this->resolveGroupName($field->definition->options);
+                $comparison = array_diff($groupNames, $field->definition->options);
+
+                if (empty($comparison)) {
+                    /*
+                     * No Change detected. Skip updating options.
+                     */
+
+                    return;
+                }
+
                 $field->lapId               = $lapId;
-                $field->definition->options = $this->resolveGroupName($field->definition->options);
+                $field->definition->options = $groupNames;
                 $field->value               = implode('|', $this->resolveGroupName(explode('|', $field->value)));
 
                 $this->laposta->updateField($lapGroupId, $field);
