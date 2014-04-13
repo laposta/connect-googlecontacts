@@ -352,7 +352,13 @@ class SyncFromGoogle extends AbstractCommand
                 $groupElements->fields[$field->definition->identifier] = $lapId;
                 $this->listMap->tags[$field->definition->tag]          = $field->definition->identifier;
             }
-            elseif ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+            else {
+                $this->logger->debug(
+                    "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
+                );
+            }
+
+            if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
                 $this->logger->debug(
                     "Updating options for field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
                 );
@@ -362,11 +368,6 @@ class SyncFromGoogle extends AbstractCommand
                 $field->value               = implode('|', $this->resolveGroupName(explode('|', $field->value)));
 
                 $this->laposta->updateField($lapGroupId, $field);
-            }
-            else {
-                $this->logger->debug(
-                    "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
-                );
             }
         }
     }
