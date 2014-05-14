@@ -19,6 +19,7 @@ use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
 use DateTime;
 use Exception;
+use Google_Service_Exception;
 use Iterator\Abstraction\IteratorFactoryInterface;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
@@ -447,6 +448,13 @@ class SyncFromGoogle extends AbstractCommand
                     )}' on line '{$e->getLine()}' of '{$e->getFile()}'"
                 );
             }
+            catch (Google_Service_Exception $e) {
+                $errors = json_encode($e->getErrors());
+
+                $this->logger->error(
+                    "{$e->getMessage()} with errors '{$errors}' on line '{$e->getLine()}' of '{$e->getFile()}'"
+                );
+            }
             catch (Exception $e) {
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
             }
@@ -467,8 +475,8 @@ class SyncFromGoogle extends AbstractCommand
         }
         catch (Laposta_Error $e) {
             $this->logger->error(
-                "{$e->getMessage()} with code '{$e->getHttpStatus(
-                )}'" //  and response '{$e->getJsonBody()}' on line '{$e->getLine()}' of '{$e->getFile()}'
+                "{$e->getMessage()} with code '{$e->getHttpStatus()}'"
+                //  and response '{$e->getJsonBody()}' on line '{$e->getLine()}' of '{$e->getFile()}'
             );
         }
         catch (Exception $e) {
