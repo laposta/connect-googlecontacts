@@ -433,11 +433,9 @@ class SyncFromGoogle extends AbstractCommand
 
         \Laposta::setApiKey($this->clientData->lapostaApiToken);
 
-        $minDate = new DateTime();
-        $minDate->setTimestamp($this->clientData->lastImport);
-        $minDate->setTimezone(new DateTimeZone('UTC'));
+        $minDate = new DateTime('@' . $this->clientData->lastImport);
+        $this->logger->debug("Setting last google sync time to {$minDate->format('Y-m-d H:i:s T')}");
         $this->google->setDateRange($minDate);
-
         $this->clientData->lastImport = time();
 
         while ($this->google->hasMoreGroups()) {
