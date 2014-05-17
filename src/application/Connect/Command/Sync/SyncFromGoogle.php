@@ -18,6 +18,7 @@ use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
 use DateTime;
+use DateTimeZone;
 use Exception;
 use Google_Service_Exception;
 use Iterator\Abstraction\IteratorFactoryInterface;
@@ -434,6 +435,7 @@ class SyncFromGoogle extends AbstractCommand
 
         $minDate = new DateTime();
         $minDate->setTimestamp($this->clientData->lastImport);
+        $minDate->setTimezone(new DateTimeZone('UTC'));
         $this->google->setDateRange($minDate);
 
         $this->clientData->lastImport = time();
