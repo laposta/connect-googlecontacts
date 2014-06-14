@@ -151,18 +151,26 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/google/google-api-php-client.git",
-                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234"
+                "reference": "28852dcb90a7d9e5c40ac920873153bdd118895a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/86fb12d484da7fecbe04cecf767ac83008f24234",
-                "reference": "86fb12d484da7fecbe04cecf767ac83008f24234",
+                "url": "https://api.github.com/repos/google/google-api-php-client/zipball/28852dcb90a7d9e5c40ac920873153bdd118895a",
+                "reference": "28852dcb90a7d9e5c40ac920873153bdd118895a",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.2.1"
             },
+            "require-dev": {
+                "phpunit/phpunit": "3.7.*"
+            },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
             "autoload": {
                 "classmap": [
                     "src/"
@@ -180,7 +188,7 @@
             "keywords": [
                 "google"
             ],
-            "time": "2013-12-27 15:12:28"
+            "time": "2014-06-12 07:09:15"
         },
         {
             "name": "laposta/laposta-api-php",

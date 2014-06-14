@@ -120,11 +120,23 @@ class Google implements ApiHelperInterface
 
         $this->client->getAuth()->sign($request);
 
-        if ($json) {
-            return Google_Http_REST::execute($this->client, $request);
+        try {
+            if ($json) {
+                return Google_Http_REST::execute($this->client, $request);
+            }
+
+            $this->client->getIo()->makeRequest($request);
+        }
+        catch (\Exception $e) {
+            $this->logger->debug('Request Headers: ' . json_encode($request->getRequestHeaders()));
+            $this->logger->debug('POST Body:' . json_encode($request->getPostBody()));
+            $this->logger->debug('Response Headers: ' . json_encode($request->getResponseHeaders()));
+            $this->logger->debug('Response Body: ' . $request->getResponseBody());
+
+            throw $e;
         }
 
-        return $this->client->getIo()->makeRequest($request)->getResponseBody();
+        return $request->getResponseBody();
     }
 
     /**
@@ -139,7 +151,14 @@ class Google implements ApiHelperInterface
             return null;
         }
 
-        $response = $this->request($this->groupsUrl);
+        try {
+            $response = $this->request($this->groupsUrl);
+        }
+        catch (\Exception $e) {
+            $this->groupsUrl = '';
+
+            throw $e;
+        }
 
         if (!isset($response['feed']) || !is_array($response['feed'])) {
             throw new RuntimeException('Unable to load Groups from google');
@@ -885,7 +904,10 @@ class Google implements ApiHelperInterface
         $param = 'updated-min=' . $min->format('Y-m-d\TH:i:s');
 
         if (!empty($this->groupsUrl)) {
-            $this->groupsUrl = $this->groupsUrl . (strpos($this->groupsUrl, '?') !== false ? '&' : '?') . $param;
+            /*
+             * 14 June 2014 - Disabled due to bad request error returned by google.
+             */
+            // $this->groupsUrl = $this->groupsUrl . (strpos($this->groupsUrl, '?') !== false ? '&' : '?') . $param;
         }
 
         if (!empty($this->contactsUrl)) {
