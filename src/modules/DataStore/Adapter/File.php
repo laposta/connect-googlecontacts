@@ -54,7 +54,7 @@ class File implements AdapterInterface
      */
     public function retrieve()
     {
-        if (!file_exists($this->path) || !is_readable($this->path)) {
+        if (!file_exists($this->path) || !is_readable($this->path) || filesize($this->path) === 0) {
             return null;
         }
 
