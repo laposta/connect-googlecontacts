@@ -36,7 +36,7 @@ class DataStore
      */
     public function hasContent()
     {
-        return !is_null($this->content);
+        return !is_null($this->content) && !is_empty($this->content);
     }
 
     /**
