@@ -143,14 +143,10 @@ class Authority extends Model
 
         $this->loadClientData();
 
-        if (is_empty($this->clientData->lapostaApiToken)) {
-            /** @var $command PurgeClientData */
-            $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientData');
-            $command->setClientToken($this->clientToken)->execute();
-
-            return $this;
-        }
-        else if ($this->clientData->lapostaApiToken !== $apiToken) {
+        //
+        // if api token is empty allow purging local data.
+        //
+        if (!is_empty($this->clientData->lapostaApiToken) && $this->clientData->lapostaApiToken !== $apiToken) {
             throw new RuntimeException('Token mismatch. You are not permitted to perform this action.');
         }
 
