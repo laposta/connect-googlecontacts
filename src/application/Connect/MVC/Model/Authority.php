@@ -143,7 +143,7 @@ class Authority extends Model
 
         $this->loadClientData();
 
-        if (is_empty($this->clientData)) {
+        if (is_empty($this->clientData->lapostaApiToken)) {
             /** @var $command PurgeClientData */
             $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientData');
             $command->setClientToken($this->clientToken)->execute();
