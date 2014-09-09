@@ -11,6 +11,7 @@ use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
 use ApiHelper\Contacts\Entity\FieldDefinition;
 use ApiHelper\Contacts\Entity\Group;
+use ApiHelper\Contacts\Exception\UnknownListException;
 use DateTime;
 use Entity\Exception\RuntimeException;
 use Iterator\Abstraction\IteratorFactoryInterface as IteratorFactoryInterface;
@@ -19,6 +20,7 @@ use Iterator\ArrayPathIterator;
 use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 use Laposta as LapostaApi;
+use Laposta_Error;
 use Laposta_List;
 use Laposta_Member;
 use Laposta_Webhook;
@@ -558,9 +560,18 @@ class Laposta implements ApiHelperInterface
         foreach ($hooks as $hookId => $groupId) {
             $this->logger->debug("Disabling hook '$hookId' for list '$groupId'");
 
-            $hook = new Laposta_Webhook($groupId);
+            try {
+                $hook = new Laposta_Webhook($groupId);
 
-            $hook->update($hookId, array('blocked' => 'true'));
+                $hook->update($hookId, array('blocked' => 'true'));
+            }
+            catch (Laposta_Error $e) {
+                if ($e->getMessage() === "Unknown list") {
+                    throw new UnknownListException($e->getMessage(), $e->getCode(), $e, $groupId);
+                }
+
+                throw $e;
+            }
         }
     }
 

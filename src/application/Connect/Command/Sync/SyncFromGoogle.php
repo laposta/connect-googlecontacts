@@ -9,6 +9,7 @@ use ApiHelper\Contacts\Entity\Contact;
 use ApiHelper\Contacts\Entity\Field;
 use ApiHelper\Contacts\Entity\FieldDefinition;
 use ApiHelper\Contacts\Entity\Group;
+use ApiHelper\Contacts\Exception\UnknownListException;
 use ApiHelper\Contacts\Google;
 use ApiHelper\Contacts\Laposta;
 use Command\Abstraction\AbstractCommand;
@@ -472,6 +473,21 @@ class SyncFromGoogle extends AbstractCommand
 
             $this->logger->info('Re-enabling hooks for all groups');
             $this->laposta->enableHooks($this->listMap->hooks);
+        }
+        catch (UnknownListException $e) {
+            //
+            // Remove group from mappings and try again next time
+            //
+            $this->listMap->groups->offsetUnset($e->getListId());
+            $this->listMap->groupElements->offsetUnset($e->getListId());
+
+            foreach ($this->listMap->hooks as $hookId => $groupId) {
+                if ($groupId === $e->getListId()) {
+                    $this->listMap->hooks->offsetUnset($hookId);
+                }
+            }
+
+            $this->logger->error("Cleaned group '{$e->getListId()}' from listMap");
         }
         catch (Laposta_Error $e) {
             $this->logger->error(
