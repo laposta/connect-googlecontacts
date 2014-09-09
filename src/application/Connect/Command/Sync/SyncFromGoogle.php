@@ -486,6 +486,9 @@ class SyncFromGoogle extends AbstractCommand
             if ($this->listMap->groupElements->offsetExists($e->getListId())) {
                 $this->listMap->groupElements->offsetUnset($e->getListId());
             }
+
+            $this->listMap->hooks->rewind();
+
             foreach ($this->listMap->hooks as $hookId => $groupId) {
                 if ($groupId === $e->getListId() && $this->listMap->hooks->offsetExists($hookId)) {
                     $this->listMap->hooks->offsetUnset($hookId);
