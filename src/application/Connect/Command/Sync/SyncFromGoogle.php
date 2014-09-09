@@ -458,6 +458,8 @@ class SyncFromGoogle extends AbstractCommand
             }
             catch (Exception $e) {
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+
+                break;
             }
         }
 
@@ -489,6 +491,8 @@ class SyncFromGoogle extends AbstractCommand
                     $this->listMap->hooks->offsetUnset($hookId);
                 }
             }
+
+            $this->clientData->lastImport = null;
 
             $this->logger->error("Cleaned group '{$e->getListId()}' from listMap");
         }
