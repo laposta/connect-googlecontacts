@@ -566,7 +566,7 @@ class Laposta implements ApiHelperInterface
                 $hook->update($hookId, array('blocked' => 'true'));
             }
             catch (Laposta_Error $e) {
-                if ($e->getMessage() === "Unknown list") {
+                if ($e->getMessage() === "API error: Unknown list") {
                     throw new UnknownListException($e->getMessage(), $e->getCode(), $e, $groupId);
                 }
 
