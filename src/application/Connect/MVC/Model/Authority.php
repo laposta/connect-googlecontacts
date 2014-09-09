@@ -154,10 +154,6 @@ class Authority extends Model
         $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientData');
         $command->setClientToken($this->clientToken)->execute();
 
-        /** @var $command PurgeClientMap */
-        $command = $this->getCommandFactory()->create('Connect\Command\PurgeClientMap');
-        $command->setClientToken($this->clientToken)->execute();
-
         return $this;
     }
 
