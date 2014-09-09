@@ -478,11 +478,14 @@ class SyncFromGoogle extends AbstractCommand
             //
             // Remove group from mappings and try again next time
             //
-            $this->listMap->groups->offsetUnset($e->getListId());
-            $this->listMap->groupElements->offsetUnset($e->getListId());
-
+            if ($this->listMap->groups->offsetExists($e->getListId())) {
+                $this->listMap->groups->offsetUnset($e->getListId());
+            }
+            if ($this->listMap->groupElements->offsetExists($e->getListId())) {
+                $this->listMap->groupElements->offsetUnset($e->getListId());
+            }
             foreach ($this->listMap->hooks as $hookId => $groupId) {
-                if ($groupId === $e->getListId()) {
+                if ($groupId === $e->getListId() && $this->listMap->hooks->offsetExists($hookId)) {
                     $this->listMap->hooks->offsetUnset($hookId);
                 }
             }
