@@ -11,5 +11,8 @@ class Cli extends View
         global $argv;
 
         echo 'Usage: ' . $argv[0] . ' import' . "\n";
+        echo 'Usage: ' . $argv[0] . ' list' . "\n";
+        echo 'Usage: ' . $argv[0] . ' list {customerId}' . "\n";
+        echo 'Usage: ' . $argv[0] . ' restore {customerId} {fromListId} {toListId}' . "\n";
     }
 } 

@@ -2,6 +2,7 @@
 
 namespace Connect\MVC;
 
+use ApiHelper\Contacts\Entity\Group;
 use Cli\CliHelper;
 use Config\Config;
 use Connect\MVC\Base\Controller;
@@ -79,10 +80,34 @@ class Cli extends Controller
         if ($action === 'IMPORT') {
             $this->importFromGoogle();
         }
+
+        if ($action === 'LIST') {
+            $clientId = '';
+
+            if ($this->cli->getArgCount() > 2) {
+                $clientId = $this->cli->getArg(2);
+            }
+
+            $this->showInfoList($clientId);
+        }
+
+        if ($action === 'RESTORE') {
+            if ($this->cli->getArgCount() < 5) {
+                $this->view->printHelp();
+
+                return;
+            }
+
+            $clientId  = $this->cli->getArg(2);
+            $fromListId = $this->cli->getArg(3);
+            $toListId = $this->cli->getArg(4);
+
+            $this->restoreListMappings($clientId, $fromListId, $toListId);
+        }
     }
 
     /**
-     * @return Sync
+     * @return Cli
      * @throws \RuntimeException
      */
     protected function importFromGoogle()
@@ -90,5 +115,47 @@ class Cli extends Controller
         $this->model->importFromGoogle($this->config->get('path.data'));
 
         return $this;
+    }
+
+    /**
+     * Show a list of registered customers or if given a customerId a list of mailing lists for the customer
+     *
+     * @param string $clientId
+     */
+    protected function showInfoList($clientId = '')
+    {
+        if (empty($clientId)) {
+            $list = $this->model->buildClientList($this->config->get('path.data'));
+
+            foreach ($list as $index => $clientId) {
+                echo "$index => $clientId \n";
+            }
+        }
+        else {
+            $list = $this->model->buildMailingListList($clientId);
+
+            echo "Mailing lists for customer with id '$clientId': \n";
+
+            /** @var $group Group */
+            foreach ($list as $group) {
+                echo "{$group->lapId} => {$group->title}\n";
+            }
+        }
+    }
+
+    /**
+     * Restore mappings from a new mailing list back into an old mailing list
+     *
+     * @param $clientId
+     * @param $fromListId
+     * @param $toListId
+     *
+     * @return Cli
+     */
+    protected function restoreListMappings($clientId, $fromListId, $toListId)
+    {
+        echo "Restoring customer mappings for '$clientId' from list '$fromListId' to '$toListId': \n";
+
+        $this->model->rebuildClientMap($clientId, $fromListId, $toListId);
     }
 }

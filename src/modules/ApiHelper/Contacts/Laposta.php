@@ -21,6 +21,7 @@ use Iterator\LinkedKeyIterator;
 use Iterator\MultiLinkedKeyIterator;
 use Laposta as LapostaApi;
 use Laposta_Error;
+use Laposta_Field;
 use Laposta_List;
 use Laposta_Member;
 use Laposta_Webhook;
@@ -64,6 +65,11 @@ class Laposta implements ApiHelperInterface
     private $fieldMap;
 
     /**
+     * @var string
+     */
+    private $groupIdForContacts;
+
+    /**
      * Default constructor
      *
      * @param ContactsFactoryInterface $factory
@@ -83,17 +89,40 @@ class Laposta implements ApiHelperInterface
     }
 
     /**
+     * @return string
+     */
+    public function getGroupIdForContacts()
+    {
+        return $this->groupIdForContacts;
+    }
+
+    /**
      * Get all groups from the API
      *
      * @return Groups
      */
     public function getGroups()
     {
-        //        $list = new Laposta_List();
-        //
-        //        $result = $list->all();
-        //
-        //        $this->hasMoreGroups = false;
+        $list = new Laposta_List();
+
+        $this->hasMoreGroups = false;
+
+        $dataList = $list->all();
+        $groups   = array();
+
+        foreach ($dataList['data'] as $groupData) {
+            $result = $this->iteratorFactory->createArrayPathIterator($groupData);
+            $group  = $this->factory->createGroup(
+                array(
+                    'title'  => $result['list.name'],
+                    'lapId' => $result['list.list_id'],
+                )
+            );
+
+            $groups[$result['list.list_id']] = $group;
+        }
+
+        return $this->factory->createGroupCollection($groups);
     }
 
     /**
@@ -103,7 +132,20 @@ class Laposta implements ApiHelperInterface
      */
     public function getContacts()
     {
+        $member = new Laposta_Member($this->groupIdForContacts);
+
         $this->hasMoreContacts = false;
+
+        $dataList = $member->all();
+        $members  = array();
+
+        foreach ($dataList['data'] as $memberData) {
+            $member = $this->convertToContact($memberData['member']);
+
+            $members[] = $member;
+        }
+
+        return $this->factory->createContactCollection($members);
     }
 
     /**
@@ -156,6 +198,18 @@ class Laposta implements ApiHelperInterface
         $contact->lapId = $result['member.member_id'];
 
         return $contact;
+    }
+
+    /**
+     * @param string $groupIdForContacts
+     *
+     * @return Laposta
+     */
+    public function setGroupIdForContacts($groupIdForContacts)
+    {
+        $this->groupIdForContacts = $groupIdForContacts;
+
+        return $this;
     }
 
     /**
@@ -260,7 +314,7 @@ class Laposta implements ApiHelperInterface
             unset($this->fieldCache[$groupId]);
         }
 
-        $lapField = new \Laposta_Field($groupId);
+        $lapField = new Laposta_Field($groupId);
         $meta     = array(
             'name'         => $field->definition->name,
             'datatype'     => $field->definition->type,
@@ -302,7 +356,7 @@ class Laposta implements ApiHelperInterface
             unset($this->fieldCache[$groupId]);
         }
 
-        $lapField = new \Laposta_Field($groupId);
+        $lapField = new Laposta_Field($groupId);
         $meta     = array(
             'name'         => $field->definition->name,
             'datatype'     => $field->definition->type,
@@ -455,7 +509,7 @@ class Laposta implements ApiHelperInterface
             return $this->fieldCache[$groupId];
         }
 
-        $lapField = new \Laposta_Field($groupId);
+        $lapField = new Laposta_Field($groupId);
         $result   = $lapField->all();
         $fields   = new ArrayIterator();
 
