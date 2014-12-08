@@ -58,11 +58,6 @@ class Google implements ApiHelperInterface
     private $logger;
 
     /**
-     * @var array
-     */
-    protected $groupsOptions = array();
-
-    /**
      * @var array Mapping of fields to a unique field type identifier
      */
     private $fieldMap = array(
@@ -296,7 +291,6 @@ class Google implements ApiHelperInterface
             'groups',
             $this->normalizeGroupMemberships($entry['gContact$groupMembershipInfo'])
         );
-        $groups->definition->options = $this->groupsOptions;
         $fields['groups']            = $groups;
 
         if (!isset($entry['gContact$userDefinedField'])) {
@@ -1023,17 +1017,5 @@ class Google implements ApiHelperInterface
         $result = simplexml_load_string($response);
 
         return (string) $result->id;
-    }
-
-    /**
-     * @param array $groupsOptions
-     *
-     * @return Google
-     */
-    public function setGroupsOptions($groupsOptions)
-    {
-        $this->groupsOptions = $groupsOptions;
-
-        return $this;
     }
 }

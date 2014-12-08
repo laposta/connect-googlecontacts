@@ -19,7 +19,6 @@ use Connect\Entity\ClientData;
 use Connect\Entity\ListMap;
 use Connect\Entity\ListMapGroup;
 use DateTime;
-use DateTimeZone;
 use Exception;
 use Google_Service_Exception;
 use Iterator\Abstraction\IteratorFactoryInterface;
@@ -178,6 +177,8 @@ class SyncFromGoogle extends AbstractCommand
 
         $this->logger->debug("Existing groups are: " . json_encode($this->listMap->groups->toArray()));
 
+        $this->listMap->groupTitles->fromArray(array());
+
         /** @var $group Group */
         foreach ($groups as $group) {
             $this->logger->debug("Sychronizing group '$group->title'");
@@ -215,10 +216,13 @@ class SyncFromGoogle extends AbstractCommand
             $this->listMap->groups[$lapId] = $group->gId;
 
             if (!isset($this->listMap->groupElements[$lapId])) {
-                $this->listMap->groupElements[$lapId] = new ListMapGroup(array(
-                                                                             'fields'   => new MultiLinkedKeyIterator(),
-                                                                             'contacts' => new LinkedKeyIterator(),
-                                                                         ));
+                $this->listMap->groupElements[$lapId] = new ListMapGroup(
+                    array(
+                        'fields'        => new MultiLinkedKeyIterator(),
+                        'groupsOptions' => new LinkedKeyIterator(),
+                        'contacts'      => new LinkedKeyIterator(),
+                    )
+                );
             }
         }
     }
@@ -339,10 +343,29 @@ class SyncFromGoogle extends AbstractCommand
 
         /** @var $field Field */
         foreach ($fields as $field) {
-            $lapId = null;
+            $lapId    = null;
+            $isSelect = $field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE;
 
             if (isset($groupElements->fields[$field->definition->identifier])) {
                 $lapId = $groupElements->fields[$field->definition->identifier];
+            }
+
+            if ($isSelect) {
+                $options = array();
+
+                foreach ($this->listMap->groupTitles as $gGroupId => $title) {
+                    $option = array('value' => $title);
+
+                    if (isset($groupElements->groupsOptions[$gGroupId])) {
+                        $option['id'] = $groupElements->groupsOptions[$gGroupId];
+                    }
+
+                    $options[] = $option;
+                }
+
+                $field->lapId               = $lapId;
+                $field->definition->options = $options;
+                $field->value               = implode('|', $this->resolveGroupName(explode('|', $field->value)));
             }
 
             if (empty($lapId)) {
@@ -356,21 +379,27 @@ class SyncFromGoogle extends AbstractCommand
                 $this->listMap->tags[$field->definition->tag]          = $field->definition->identifier;
             }
             else {
-                $this->logger->debug(
-                    "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
-                );
+                if ($isSelect) {
+                    $this->laposta->updateField($lapGroupId, $field);
+
+                    $this->logger->debug(
+                        "Updated field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
+                    );
+                }
+                else {
+                    $this->logger->debug(
+                        "Skipping field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
+                    );
+                }
             }
 
-            if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
-                $this->logger->debug(
-                    "Updating options for field '{$field->definition->name}' in group '$lapGroupId' with id '$lapId'"
-                );
+            if ($isSelect) {
+                $groupElements->groupsOptions = array();
 
-                $field->lapId               = $lapId;
-                $field->definition->options = $this->resolveGroupName($field->definition->options);
-                $field->value               = implode('|', $this->resolveGroupName(explode('|', $field->value)));
-
-                $this->laposta->updateField($lapGroupId, $field);
+                foreach ($field->definition->options as $option) {
+                    $gGroupId                                = $this->listMap->groupTitles[$option['value']];
+                    $groupElements->groupsOptions[$gGroupId] = "{$option['id']}";
+                }
             }
         }
     }
@@ -467,7 +496,7 @@ class SyncFromGoogle extends AbstractCommand
             $this->logger->info('Disabling hooks for all groups');
             $this->laposta->disableHooks($this->listMap->hooks);
 
-            $this->google->setGroupsOptions(array_values($this->listMap->groupTitles->toArray()));
+//            $this->google->setGroupsOptions(array_keys($this->listMap->groupTitles->toArray()));
 
             while ($this->google->hasMoreContacts()) {
                 $this->synchronizeContacts($this->google->getContacts());
@@ -502,7 +531,7 @@ class SyncFromGoogle extends AbstractCommand
         catch (Laposta_Error $e) {
             $this->logger->error(
                 "{$e->getMessage()} with code '{$e->getHttpStatus()}'"
-                //  and response '{$e->getJsonBody()}' on line '{$e->getLine()}' of '{$e->getFile()}'
+            //  and response '{$e->getJsonBody()}' on line '{$e->getLine()}' of '{$e->getFile()}'
             );
         }
         catch (Exception $e) {

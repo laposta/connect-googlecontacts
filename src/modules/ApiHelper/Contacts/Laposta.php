@@ -325,7 +325,7 @@ class Laposta implements ApiHelperInterface
         );
 
         if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
-            $meta['options'] = $field->definition->options;
+            $meta['options'] = array_column($field->definition->options, 'value');
         }
 
         $result = $lapField->create($meta);
@@ -334,6 +334,10 @@ class Laposta implements ApiHelperInterface
         $field->definition->tag = $result['field.tag'];
         $field->definition->synchronised = true;
         $field->lapId           = $result['field.field_id'];
+
+        if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+            $field->definition->options = $result['field.options_full'];
+        }
 
         return $result['field.field_id'];
     }
@@ -367,14 +371,50 @@ class Laposta implements ApiHelperInterface
         );
 
         if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
-            $meta['options'] = $field->definition->options;
+            if (count(array_filter(array_column($field->definition->options, 'id'))) === 0) {
+                $meta['options'] = array_column($field->definition->options, 'value');
+            }
+            else {
+                $meta['options_full'] = $this->combine($field->definition->options);
+            }
         }
 
-        $lapField->update($field->lapId, $meta);
+        $result = $lapField->update($field->lapId, $meta);
+        $result = $this->iteratorFactory->createArrayPathIterator($result);
+
+        if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
+            $field->definition->options = $result['field.options_full'];
+        }
 
         $field->definition->synchronised = true;
 
         return $field->lapId;
+    }
+
+    protected function combine($array)
+    {
+        $result = array();
+
+        foreach ($array as $row) {
+            if (isset($row['id']) && is_string($row['id']) && $row['id'] !== '') {
+                $result[$row['id']] = $row['value'];
+            }
+            else {
+                $result[] = $row['value'];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    public function filterString($value)
+    {
+        return is_string($value) && $value !== '';
     }
 
     /**

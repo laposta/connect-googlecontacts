@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+
+<h2>Authorize</h2>
+<form method="post" action="http://dev01.laposta-infra.nl/authority/">
+  <input type="text" name="email" placeholder="{laposta_login}" />
+  <input type="text" name="lapostaApiToken" placeholder="{laposta_api_key}" />
+  <input type="text" name="returnUrl" placeholder="{return_url}" />
+
+  <input type="submit" value="Yes, Do it!" />
+</form>
+
+<h2>Sync</h2>
+<form method="post" action="http://dev01.laposta-infra.nl/sync/import">
+  <input type="text" name="email" placeholder="{laposta_login}" />
+  <input type="text" name="lapostaApiToken" placeholder="{laposta_api_key}" />
+  <input type="text" name="returnUrl" placeholder="{return_url}" />
+
+  <input type="submit" value="Yes, Import them all!" />
+</form>
+
+<h2>Reset</h2>
+<form method="post" action="http://dev01.laposta-infra.nl/sync/reset">
+  <input type="text" name="email" placeholder="{laposta_login}" />
+  <input type="text" name="lapostaApiToken" placeholder="{laposta_api_key}" />
+  <input type="text" name="returnUrl" placeholder="{return_url}" />
+
+  <input type="submit" value="Yes, Remove everything!" />
+</form>
+
+</body>
+</html>

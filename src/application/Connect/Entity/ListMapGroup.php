@@ -12,6 +12,11 @@ class ListMapGroup extends ClearableEntity
     public $fields;
 
     /**
+     * @var \Iterator\LinkedKeyIterator Laposta field option id => internal group id
+     */
+    public $groupsOptions;
+
+    /**
      * @var \Iterator\LinkedKeyIterator Laposta contact id => Google contact id
      */
     public $contacts;
