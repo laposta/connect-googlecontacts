@@ -391,6 +391,16 @@ class Laposta implements ApiHelperInterface
         return $field->lapId;
     }
 
+    public function getSelectFieldOptionsFull($listId, $fieldId)
+    {
+        $field  = new Laposta_Field($listId);
+        $result = $this->iteratorFactory->createArrayPathIterator(
+            $field->get($fieldId)
+        );
+
+        return $result['field.options_full'];
+    }
+
     protected function combine($array)
     {
         $result = array();

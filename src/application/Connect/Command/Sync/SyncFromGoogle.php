@@ -353,6 +353,17 @@ class SyncFromGoogle extends AbstractCommand
             if ($isSelect) {
                 $options = array();
 
+                if ($groupElements->groupsOptions->count() === 0 && !is_null($lapId)) {
+                    $optionsFull = $this->laposta->getSelectFieldOptionsFull($lapGroupId, $lapId);
+
+                    foreach ($optionsFull as $optionItem) {
+                        if (isset($this->listMap->groupTitles[$optionItem['value']])) {
+                            $gGroupId = $this->listMap->groupTitles[$optionItem['value']];
+                            $groupElements->groupsOptions[$gGroupId] = "{$optionItem['id']}";
+                        }
+                    }
+                }
+
                 foreach ($this->listMap->groupTitles as $gGroupId => $title) {
                     $option = array('value' => $title);
 
