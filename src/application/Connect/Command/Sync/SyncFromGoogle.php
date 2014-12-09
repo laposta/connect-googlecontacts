@@ -341,6 +341,10 @@ class SyncFromGoogle extends AbstractCommand
         /** @var $groupElements ListMapGroup */
         $groupElements = $this->listMap->groupElements[$lapGroupId];
 
+        if (is_null($groupElements->groupsOptions)) {
+            $groupElements->groupsOptions = array();
+        }
+
         /** @var $field Field */
         foreach ($fields as $field) {
             $lapId    = null;
@@ -506,8 +510,6 @@ class SyncFromGoogle extends AbstractCommand
         try {
             $this->logger->info('Disabling hooks for all groups');
             $this->laposta->disableHooks($this->listMap->hooks);
-
-//            $this->google->setGroupsOptions(array_keys($this->listMap->groupTitles->toArray()));
 
             while ($this->google->hasMoreContacts()) {
                 $this->synchronizeContacts($this->google->getContacts());
