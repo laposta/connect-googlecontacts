@@ -177,8 +177,6 @@ class SyncFromGoogle extends AbstractCommand
 
         $this->logger->debug("Existing groups are: " . json_encode($this->listMap->groups->toArray()));
 
-        $this->listMap->groupTitles->fromArray(array());
-
         /** @var $group Group */
         foreach ($groups as $group) {
             $this->logger->debug("Sychronizing group '$group->title'");
@@ -482,6 +480,8 @@ class SyncFromGoogle extends AbstractCommand
         $this->logger->debug("Setting last google sync time to {$minDate->format('Y-m-d H:i:s T')}");
         $this->google->setDateRange($minDate);
         $this->clientData->lastImport = time();
+
+        $this->listMap->groupTitles->fromArray(array());
 
         while ($this->google->hasMoreGroups()) {
             try {
