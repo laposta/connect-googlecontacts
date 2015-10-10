@@ -366,7 +366,10 @@ class SyncFromGoogle extends AbstractCommand
                     }
                 }
 
-                $nextOptionId = max(array_values($groupElements->groupsOptions)) + 1;
+                $nextOptionId = 0;
+                if (is_array($groupElements->groupsOptions) && !empty($groupElements->groupsOptions)) {
+                    $nextOptionId = max(array_values($groupElements->groupsOptions)) + 1;
+                }
 
                 foreach ($this->listMap->groupTitles as $gGroupId => $title) {
                     $option = array('value' => $title);
