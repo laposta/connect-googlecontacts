@@ -373,9 +373,15 @@ class Laposta implements ApiHelperInterface
         if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
             if (count(array_filter(array_column($field->definition->options, 'id'))) === 0) {
                 $meta['options'] = array_column($field->definition->options, 'value');
+                $this->logger->debug(
+                    "Preparing field '{$field->definition->name}' in group '$groupId' with options '".json_encode($meta['options'])."'"
+                );
             }
             else {
                 $meta['options_full'] = $this->combine($field->definition->options);
+                $this->logger->debug(
+                    "Preparing field '{$field->definition->name}' in group '$groupId' with options '".json_encode($meta['options_full'])."'"
+                );
             }
         }
 
@@ -384,6 +390,9 @@ class Laposta implements ApiHelperInterface
 
         if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
             $field->definition->options = $result['field.options_full'];
+            $this->logger->debug(
+                "Saved field '{$field->definition->name}' in group '$groupId' returned options '".json_encode($result['field.options_full'])."'"
+            );
         }
 
         $field->definition->synchronised = true;
