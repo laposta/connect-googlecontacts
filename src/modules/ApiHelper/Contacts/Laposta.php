@@ -390,6 +390,9 @@ class Laposta implements ApiHelperInterface
 
         if ($field->definition->type === FieldDefinition::TYPE_SELECT_MULTIPLE || $field->definition->type === FieldDefinition::TYPE_SELECT_SINGLE) {
             $field->definition->options = $result['field.options_full'];
+            $this->logger->debug(
+                "Saved field '{$field->definition->name}' in group '$groupId' returned options '".json_encode($result['field.options_full'])."'"
+            );
         }
 
         $field->definition->synchronised = true;
