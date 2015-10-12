@@ -70,6 +70,21 @@ class SyncFromGoogle extends AbstractCommand
     private $lock;
 
     /**
+     * @var array
+     */
+    private $stats = array(
+        'groups' => array(
+            'total' => 0,
+            'count' => 0,
+        ),
+        'contacts' => array(
+            'total' => 0,
+            'count' => 0,
+        ),
+        'category' => array(),
+    );
+
+    /**
      * @param Google                   $google
      * @param Laposta                  $laposta
      * @param Config                   $config
@@ -159,6 +174,8 @@ class SyncFromGoogle extends AbstractCommand
 
         $count = $groups->count();
 
+        $this->stats['groups']['total'] += $count;
+
         if ($count === 0) {
             $this->logger->info('No groups to synchronize');
 
@@ -183,6 +200,8 @@ class SyncFromGoogle extends AbstractCommand
 
             $this->listMap->groupTitles[$group->gId] = $group->title;
 
+            $this->stats['category'][$group->title] = 0;
+
             if (preg_match('/^(laposta|mailing)/i', $group->title) !== 1) {
                 continue;
             }
@@ -203,10 +222,8 @@ class SyncFromGoogle extends AbstractCommand
             }
             else {
                 $group->lapId = $lapId;
-
-                $this->laposta->updateGroup($group);
-
-                $this->logger->debug("Updated group '$group->title' with id '$group->lapId'");
+                // $this->laposta->updateGroup($group);
+                // $this->logger->debug("Updated group '$group->title' with id '$group->lapId'");
             }
 
             $this->logger->debug("Group '{title}' with '{lapId}' is '{gId}'", $group);
@@ -222,6 +239,8 @@ class SyncFromGoogle extends AbstractCommand
                     )
                 );
             }
+
+            $this->stats['groups']['count']++;
         }
     }
 
@@ -233,6 +252,8 @@ class SyncFromGoogle extends AbstractCommand
         $this->logger->info('Synchronizing contacts');
 
         $count = $contacts->count();
+
+        $this->stats['contacts']['total'] += $count;
 
         if ($count === 0) {
             $this->logger->info('No contacts to synchronize');
@@ -246,6 +267,8 @@ class SyncFromGoogle extends AbstractCommand
         foreach ($contacts as $contact) {
             try {
                 $this->synchronizeContact($contact);
+
+                $this->stats['contacts']['count']++;
             }
             catch (Laposta_Error $e) {
                 $this->logger->error(
@@ -326,6 +349,11 @@ class SyncFromGoogle extends AbstractCommand
                 );
 
                 $this->laposta->updateContact($lapGroupId, $contact, $subscribed);
+            }
+
+            foreach ($contact->groups->getArrayCopy() as $grp) {
+                $grpName = $groupElements[$grp];
+                $this->stats[$grpName]++;
             }
         }
     }
@@ -552,6 +580,8 @@ class SyncFromGoogle extends AbstractCommand
         }
 
         $this->lock->unlock($this->clientData->email);
+
+        $this->logger->debug(json_encode($this->stats));
 
         return $this;
     }
