@@ -76,10 +76,14 @@ class SyncFromGoogle extends AbstractCommand
         'groups' => array(
             'total' => 0,
             'count' => 0,
+            'skipped' => 0,
+            'error' => 0,
         ),
         'contacts' => array(
             'total' => 0,
             'count' => 0,
+            'skipped' => 0,
+            'error' => 0,
         ),
         'category' => array(),
     );
@@ -203,6 +207,8 @@ class SyncFromGoogle extends AbstractCommand
             $this->stats['category'][$group->title] = 0;
 
             if (preg_match('/^(laposta|mailing)/i', $group->title) !== 1) {
+                $this->stats['groups']['skipped']++;
+
                 continue;
             }
 
@@ -267,13 +273,12 @@ class SyncFromGoogle extends AbstractCommand
         foreach ($contacts as $contact) {
             try {
                 $this->synchronizeContact($contact);
-
-                $this->stats['contacts']['count']++;
             }
             catch (Laposta_Error $e) {
                 $this->logger->error(
                     "{$e->getMessage()} with code '{$e->getHttpStatus()}'"
                 );
+                $this->stats['contacts']['error']++;
             }
             catch (Exception $e) {
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
@@ -299,6 +304,7 @@ class SyncFromGoogle extends AbstractCommand
 
             if (empty($lapGroupId)) {
                 $this->logger->warning("Unable to import into nonexistent group '$gGroupId'.");
+                $this->stats['contacts']['error']++;
 
                 continue;
             }
@@ -323,6 +329,8 @@ class SyncFromGoogle extends AbstractCommand
                 $this->logger->debug(
                     "Skipping contact '{$contact->email}' in group '$lapGroupId'"
                 );
+
+                $this->stats['contacts']['skipped']++;
 
                 continue;
             }
@@ -351,8 +359,10 @@ class SyncFromGoogle extends AbstractCommand
                 $this->laposta->updateContact($lapGroupId, $contact, $subscribed);
             }
 
+            $this->stats['contacts']['count']++;
+
             foreach ($contact->groups->getArrayCopy() as $grp) {
-                $grpName = $groupElements[$grp];
+                $grpName = $this->resolveGroupName($grp);
                 $this->stats[$grpName]++;
             }
         }
@@ -581,7 +591,7 @@ class SyncFromGoogle extends AbstractCommand
 
         $this->lock->unlock($this->clientData->email);
 
-        $this->logger->debug(json_encode($this->stats));
+        $this->logger->debug("Import results: " . json_encode($this->stats));
 
         return $this;
     }
