@@ -21,3 +21,8 @@ vendor/
 ##
 .DS_Store
 .AppleDouble
+
+##
+## Other
+##
+makefile

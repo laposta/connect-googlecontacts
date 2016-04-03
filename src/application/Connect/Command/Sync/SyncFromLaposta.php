@@ -466,6 +466,7 @@ class SyncFromLaposta extends AbstractCommand
             }
             catch (Exception $e) {
                 $this->logger->error("{$e->getMessage()} on line '{$e->getLine()}' of '{$e->getFile()}'");
+                $this->logger->debug($e->getTraceAsString());
             }
         }
 
