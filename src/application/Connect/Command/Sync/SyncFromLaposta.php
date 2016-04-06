@@ -357,6 +357,12 @@ class SyncFromLaposta extends AbstractCommand
         $this->laposta->setFieldMap($this->listMap->groupElements[$listId]->fields);
 
         if (!isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
+            if ($event['data.state'] === "unconfirmed") {
+                $this->logger->debug("Contact '{$event['data.email']}' is unconfirmed. Skipping");
+
+                return;
+            }
+
             $contact         = $this->laposta->convertToContact($event['data']);
             $contact->groups = $this->resolveGroupId($contact->groups);
 
@@ -364,23 +370,32 @@ class SyncFromLaposta extends AbstractCommand
                 "Adding contact to google with data: " . json_encode($contact->toArray(true))
             );
 
-            $this->google->addContact($groupId, $contact);
+            $this->google->addContact(null, $contact);
             $this->listMap->groupElements[$listId]->contacts[$memberId] = $contact->gId;
 
             $this->logger->notice(
                 "Unrecognized member '$memberId'. Added new member '$contact->gId' to group '$groupId'."
             );
-
-            return;
         }
 
         if (isset($this->listMap->groupElements[$listId]) && isset($this->listMap->groupElements[$listId]->contacts[$memberId])) {
             $contactId = $this->listMap->groupElements[$listId]->contacts[$memberId];
 
+            if ($event['data.state'] === "unconfirmed") {
+                $contact         = $this->laposta->convertToContact($event['data']);
+                $contact->groups = new ArrayIterator();
+
+                $this->google->updateContact($groupId, $contact);
+
+                $this->logger->debug("Contact '{$event['data.email']}' is unconfirmed. Removed from all groups.");
+
+                return;
+            }
+
             if ($event['event'] === 'subscribed') {
                 $this->google->addContactToGroup($contactId, $groupId);
 
-                $this->logger->info("Added member '$contactId' to group '$groupId'.");
+                $this->logger->info("Contact subscribed. Added member '$contactId' to group '$groupId'.");
             }
             else if ($event['event'] === 'modified') {
                 $contact         = $this->laposta->convertToContact($event['data']);
@@ -389,13 +404,14 @@ class SyncFromLaposta extends AbstractCommand
 
                 $this->google->updateContact($groupId, $contact);
 
-                $this->logger->info("Updated member '$contactId'.");
+                $this->logger->info("Contact modified. Updated member '$contactId'.");
             }
             else if ($event['event'] === 'deactivated') {
                 $this->google->removeContactFromGroup($contactId, $groupId);
 
-                $this->logger->info("Removed member '$contactId' from group '$groupId'.");
+                $this->logger->info("Contact deactivated. Removed member '$contactId' from group '$groupId'.");
             }
+
         }
     }
 

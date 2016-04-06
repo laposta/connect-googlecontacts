@@ -552,7 +552,7 @@ class Laposta implements ApiHelperInterface
             $contact->fields[$type] = $this->factory->createField($type, $value);
         }
 
-        if (strlen($iterator['custom_fields.groups']) > 0) {
+        if (is_array($iterator['custom_fields.groups'])) {
             $contact->groups = $iterator['custom_fields.groups'];
         } else {
             $contact->groups = array();
